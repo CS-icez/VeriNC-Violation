@@ -1,0 +1,11 @@
+Host worker1
+	HostName 172.20.20.11
+	User root
+	Port 22
+	IdentityFile ~/.ssh/id_ed25519
+
+Host worker2
+    HostName 172.20.20.12
+    User root
+    Port 22
+    IdentityFile ~/.ssh/id_ed25519
