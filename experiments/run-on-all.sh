@@ -77,6 +77,7 @@ numa_1_cores=0@20,1@21,2@22,3@23,4@24,5@25,6@26,7@27,8@28,9@29,10@30,11@31
 # ssh pro0 "$run_client 5 b1:00.0 $numa_2_cores 1 $arguments" &
 # ssh pro1 "$run_client 6 b1:00.0 $numa_2_cores 1 $arguments" &
 # ssh pro2 "$run_client 7 b1:00.0 $numa_2_cores 1 $arguments" &
+worker1=root@172.20.20.11
 ssh worker1 "source /etc/profile && module load dpdk/dpdk-21.11.7 && $run_client 1 0000:e3:00.1 $numa_1_cores 1 $arguments" &
 
 if [ "$system_name" == "srvlock" ] || [ "$system_name" == "netlock" ]; then

@@ -50,7 +50,8 @@ CFLAGS += -fPIC
 CFLAGS += -O3 $(shell $(PKGCONF) --cflags libdpdk)
 CFLAGS += -DALLOW_EXPERIMENTAL_API
 CFLAGS += -DNO_DCT
-LDFLAGS += -libverbs -lpthread -ldl
+# LDFLAGS += -libverbs -lpthread -ldl
+LDFLAGS += -lpthread -ldl
 LDFLAGS += $(shell $(PKGCONF) --libs libdpdk)
 
 CFLAGS += -I$(INC_DIR) -I$(UTIL_DIR) -I$(LIB_DIR) -I$(RIB_DIR) -I$(TOML_DIR) 

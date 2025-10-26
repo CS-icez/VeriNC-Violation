@@ -1,18 +1,18 @@
 
 # The username and password on all machines in the cluster,
 # including the switch control plane.
-export USERNAME='bty'
-export PASSWORD='1234'
+export USERNAME='root'
+export PASSWORD='root'
 
 # The paths to the project source code, benchmark traces, and 
 # system output. Must be identical on all machines in the cluster.
-export FISSLOCK_PATH=/home/bty/flowlock-benchmark
+export FISSLOCK_PATH=/home/bty/fisslock
 export FISSLOCK_TRACE_PATH=$FISSLOCK_PATH/traces
 export FISSLOCK_LOG_PATH=$FISSLOCK_PATH/log
 
 # There can be a master machine which controls the cluster
 # to run the experiments as well as store the experiment results.
-export MASTER_FISSLOCK_PATH=/home/bty/flowlock-benchmark
+export MASTER_FISSLOCK_PATH=/home/bty/fisslock
 export RESULT_PATH=$MASTER_FISSLOCK_PATH/results
 
 # The hostname and ID of machines in the cluster.
@@ -25,8 +25,8 @@ export BF_SDE_PATH="/root/onl-bf-sde"
 
 
 export HOST_NUM=$(echo $HOSTS | wc -w)
-export LOCAL_PROJ_PATH=~/myrepo/flowlock-benchmark
-export SWITCH_PROJ_PATH=/root/bty/flowlock-benchmark
+export LOCAL_PROJ_PATH=~/myrepo/verinc-fisslock
+export SWITCH_PROJ_PATH=/root/bty/fisslock
 
 function compile_p4() {
     docker run -it --rm -v $LOCAL_PROJ_PATH:$SWITCH_PROJ_PATH sde:9.13.3-no-bsp bash -i -c \

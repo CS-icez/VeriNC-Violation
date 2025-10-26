@@ -4,7 +4,7 @@ cluster_name = "worker"
 host_user = "bty"
 local_home_dir = "/home/" + host_user + "/"
 remote_server_home_dir = "/home/" + host_user + "/"
-remote_switch_home_dir = "/root/bty/flowlock-benchmark/"
+remote_switch_home_dir = "/root/bty/fisslock/"
 remote_switch_sde_dir  = "/root/onl-bf-sde/"
 
 switch_id = "tofino"

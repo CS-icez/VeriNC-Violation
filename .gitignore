@@ -52,3 +52,7 @@ netlock-p4-build/
 traces/*micro*
 traces/*tatp*
 traces/*tpcc*
+clab-fisslock/
+*.annotations.json
+zlog-cfg-cur
+pcap_output/
