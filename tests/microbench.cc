@@ -244,13 +244,13 @@ int32_t lock_requesting(void* args) {
 
   fprintf(stderr, "[host%u]tx core %u done, request throughput %.4f\n", LOCALHOST_ID, lcore_id, lcore_thpt);
 
-  struct rte_eth_stats eth_stat;
-  rte_eth_stats_get(0, &eth_stat);
-  LOG("ipackets %lu, opackets %lu, ibytes %lu, obytes %lu, imissed %lu, "
-      "ierrors %lu, oerrors %lu, rx_nombuf %lu",
-      eth_stat.ipackets, eth_stat.opackets, eth_stat.ibytes,
-      eth_stat.obytes, eth_stat.imissed, eth_stat.ierrors,
-      eth_stat.oerrors, eth_stat.rx_nombuf);
+  // struct rte_eth_stats eth_stat;
+  // rte_eth_stats_get(0, &eth_stat);
+  // LOG("ipackets %lu, opackets %lu, ibytes %lu, obytes %lu, imissed %lu, "
+  //     "ierrors %lu, oerrors %lu, rx_nombuf %lu",
+  //     eth_stat.ipackets, eth_stat.opackets, eth_stat.ibytes,
+  //     eth_stat.obytes, eth_stat.imissed, eth_stat.ierrors,
+  //     eth_stat.oerrors, eth_stat.rx_nombuf);
   
   return 0;
 }
@@ -293,11 +293,11 @@ void get_trace_for_lcores(const char* filename) {
     tx_lcore_id = (tx_lcore_id + 1) % TX_CORE_NUM;
   }
 
-  for (int core = RX_CORE_NUM; core < RX_CORE_NUM + TX_CORE_NUM; core++) {
-    vector<lock_request> v = lk_reqs[core];
-    for (int i = 0; i < 2; i++)
-      lk_reqs[core].insert(lk_reqs[core].end(), v.begin(), v.end());
-  }
+  // for (int core = RX_CORE_NUM; core < RX_CORE_NUM + TX_CORE_NUM; core++) {
+  //   vector<lock_request> v = lk_reqs[core];
+  //   for (int i = 0; i < 2; i++)
+  //     lk_reqs[core].insert(lk_reqs[core].end(), v.begin(), v.end());
+  // }
 
   LOG("Reading finished");
   trace_fs.close();
@@ -334,8 +334,8 @@ int main(int argc, char* argv[]) {
   }
 #else
   env_setup(argc, argv, DPDK_LCORE_TX_NUM, DPDK_LCORE_RX_NUM);
-  register_flow(SERVER_POST_TYPE, 0, 0);
-  register_flow(CLIENT_POST_TYPE, 1, 5);
+  // register_flow(SERVER_POST_TYPE, 0, 0);
+  // register_flow(CLIENT_POST_TYPE, 1, 5);
 #endif
 
   LOG("Coroutine num: %d", coroutine_num);

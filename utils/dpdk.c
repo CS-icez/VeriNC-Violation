@@ -33,22 +33,22 @@ uint8_t rss_hash_key_asymmetric[RSS_HASH_KEY_LENGTH] = {
   0x6a, 0x42, 0xb7, 0x3b, 0xbe, 0xac, 0x01, 0xfa
 }; 
 struct rte_eth_conf port_conf_template = {
-	.rxmode = {
-		.mq_mode = RTE_ETH_MQ_RX_RSS,
-		.split_hdr_size = 0,
-		.offloads = DEV_RX_OFFLOAD_IPV4_CKSUM,
-	},
-	.rx_adv_conf = {
-		.rss_conf = {
-			.rss_key = rss_hash_key_asymmetric,
-			.rss_key_len = RTE_DIM(rss_hash_key_asymmetric),
-			.rss_hf = (ETH_RSS_IP | ETH_RSS_UDP),
-		},
-	},
-	.txmode = {
-		.mq_mode = RTE_ETH_MQ_TX_NONE,
-		.offloads = DEV_TX_OFFLOAD_IPV4_CKSUM | DEV_TX_OFFLOAD_UDP_CKSUM,
-	},
+	// .rxmode = {
+		// .mq_mode = RTE_ETH_MQ_RX_RSS,
+		// .split_hdr_size = 0,
+		// .offloads = DEV_RX_OFFLOAD_IPV4_CKSUM,
+	// },
+	// .rx_adv_conf = {
+	// 	.rss_conf = {
+	// 		.rss_key = rss_hash_key_asymmetric,
+	// 		.rss_key_len = RTE_DIM(rss_hash_key_asymmetric),
+	// 		.rss_hf = (ETH_RSS_IP | ETH_RSS_UDP),
+	// 	},
+	// },
+	// .txmode = {
+	// 	.mq_mode = RTE_ETH_MQ_TX_NONE,
+	// 	.offloads = DEV_TX_OFFLOAD_IPV4_CKSUM | DEV_TX_OFFLOAD_UDP_CKSUM,
+	// },
 };
 
 uint64_t dpdk_get_mbuf() {
@@ -115,20 +115,20 @@ static inline int port_init(uint16_t portid, struct rte_mempool *mbuf_pool, stru
 
   if (dev_info.tx_offload_capa & RTE_ETH_TX_OFFLOAD_MBUF_FAST_FREE)
     port_conf.txmode.offloads |= RTE_ETH_TX_OFFLOAD_MBUF_FAST_FREE;
-  port_conf.rx_adv_conf.rss_conf.rss_hf &= dev_info.flow_type_rss_offloads;
+  // port_conf.rx_adv_conf.rss_conf.rss_hf &= dev_info.flow_type_rss_offloads;
 
   uint32_t rx_queue_id = 0;
   uint32_t tx_queue_id = 0;
   for (int i = 0; i < DPDK_LCORE_NUM; i++) {
     if (rte_lcore_is_enabled(i)) {
-        lcore_conf[i].rx_queue_id[0] = rx_queue_id++;
-        lcore_conf[i].tx_queue_id[0] = tx_queue_id++;
+        lcore_conf[i].rx_queue_id[0] = 0;
+        lcore_conf[i].tx_queue_id[0] = 0;
     }
   }
 
   /* Configure the Ethernet device. */
   retval = rte_eth_dev_configure(
-    portid, DPDK_LCORE_NUM, DPDK_LCORE_NUM, &port_conf);
+    portid, 1, 1, &port_conf);
   if (retval) return retval;
 
   retval = rte_eth_dev_adjust_nb_rx_tx_desc(portid, &nb_rxd, &nb_txd);
@@ -137,7 +137,7 @@ static inline int port_init(uint16_t portid, struct rte_mempool *mbuf_pool, stru
   /* Allocate and set up RX queues. */
   rxconf = dev_info.default_rxconf;
   rxconf.offloads = port_conf.rxmode.offloads;
-  for (q = 0; q < DPDK_LCORE_NUM; q++) {
+  for (q = 0; q < 1; q++) {
     retval = rte_eth_rx_queue_setup(portid, q, nb_rxd, 
       rte_eth_dev_socket_id(portid), &rxconf, mbuf_pool);
     if (retval < 0) return retval;
@@ -146,7 +146,7 @@ static inline int port_init(uint16_t portid, struct rte_mempool *mbuf_pool, stru
   /* Allocate and set up TX queues. */
   txconf = dev_info.default_txconf;
   txconf.offloads = port_conf.txmode.offloads;
-  for (q = 0; q < DPDK_LCORE_NUM; q++) {
+  for (q = 0; q < 1; q++) {
     retval = rte_eth_tx_queue_setup(portid, q, nb_txd, 
       rte_eth_dev_socket_id(portid), &txconf);
     if (retval < 0) return retval;

@@ -5,11 +5,11 @@
 
 #include "conf.h"
 
-#define DPDK_RX_RING_SIZE       8192
-#define DPDK_TX_RING_SIZE       8192
+#define DPDK_RX_RING_SIZE       256
+#define DPDK_TX_RING_SIZE       256
 #define DPDK_RX_QUEUE_PER_LCORE 1
 #define DPDK_TX_QUEUE_PER_LCORE 1
-#define DPDK_NUM_MBUFS          524287
+#define DPDK_NUM_MBUFS          1024
 #define DPDK_MBUF_CACHE_SIZE    250
 #define DPDK_RX_BURST_SIZE      32
 #define DPDK_TX_BURST_SIZE      1024

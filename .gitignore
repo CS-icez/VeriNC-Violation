@@ -56,3 +56,4 @@ clab-fisslock/
 *.annotations.json
 zlog-cfg-cur
 pcap_output/
+results/

@@ -18,10 +18,10 @@
  * We assign 1 core to the lock server daemon and 10 cores to
  * lock clients for sending and receiving lock packets.
  */
-#define DPDK_LCORE_NUM           12
-#define DPDK_LCORE_RX_SERVER_NUM 1
-#define DPDK_LCORE_RX_CLIENT_NUM 5
-#define DPDK_LCORE_TX_NUM        5
+#define DPDK_LCORE_NUM           4
+#define DPDK_LCORE_RX_SERVER_NUM 0
+#define DPDK_LCORE_RX_CLIENT_NUM 1
+#define DPDK_LCORE_TX_NUM        1
 #define DPDK_LCORE_RX_NUM \
   (DPDK_LCORE_RX_SERVER_NUM + DPDK_LCORE_RX_CLIENT_NUM)
 

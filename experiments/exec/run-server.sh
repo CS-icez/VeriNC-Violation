@@ -18,10 +18,9 @@ echo $PASSWORD | sudo -S -E \
   LEN_IN_SWITCH_FILE=$FISSLOCK_PATH/build/netlock_len_in_switch/$benchmark \
   HOST_ID=$host_id \
   MAX_LOCK_NUM=$max_lock_num \
-  numactl --cpubind=$socket_id --membind=$socket_id \
   ${binary} \
-  -a $device \
-  -n 4 \
+  --vdev="net_af_packet0,iface=veth" \
+  --socket-mem=32 \
   --file-prefix=node$host_id \
   --lcores $lcore_map \
   --log-level=4 \

@@ -66,7 +66,8 @@ server_arguments="$server_binary $system_name $max_lock_num $netlock_map_obj"
 ##############################################################################
 # This part of logic is cluster-specific. Please adjust it according 
 # to your own cluster setting,
-numa_1_cores=0@20,1@21,2@22,3@23,4@24,5@25,6@26,7@27,8@28,9@29,10@30,11@31
+# numa_1_cores=0@20,1@21,2@22,3@23,4@24,5@25,6@26,7@27,8@28,9@29,10@30,11@31
+numa_1_cores=0@10,1@11,2@12
 # numa_2_cores=0@1,1@3,2@5,3@7,4@9,5@11,6@13,7@15,8@17,9@19,10@21,11@23
 
 # ssh <hostname> "$run_client <hid> <nic_id> $numa_x_cores <numa_id> $arguments"

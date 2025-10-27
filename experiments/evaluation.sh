@@ -18,7 +18,7 @@ echo "Monitoring the experiment progress..."
 if [ "$system_name" = "netlock" ]; then
     total=$((6 * (HOST_NUM - 1)))
 elif [ "$system_name" = "fisslock" ]; then
-    total=$((5 * HOST_NUM))
+    total=$((1 * HOST_NUM))
 else
     echo "Error: unknown system_name '$system_name'"
     exit 1

@@ -34,7 +34,7 @@ topology:
       image: tofino:20251025
       mgmt-ipv4: 172.20.20.100
       binds:
-        - /mnt/huge:/mnt/huge
+        - /dev/hugepages:/mnt/huge
         - ~/myrepo/verinc-fisslock:/root/bty/fisslock
       cmd: |
           bash -ic "
@@ -54,12 +54,14 @@ topology:
       image: dpdk:v21.11.4
       mgmt-ipv4: 172.20.20.11
       binds:
-        - /mnt/huge:/mnt/huge
+        - /dev/hugepages:/mnt/huge
         - ~/myrepo/verinc-fisslock:/home/bty/fisslock
       cmd: sleep infinity
       ports:
         - 2211:22
       exec: # Not explained by shell, cannot use shell variables.
+        - bash -c "rm /home/bty/fisslock/model*.log /home/bty/fisslock/bf_drivers.log*"
+        - cp /home/bty/fisslock/experiments/set-env.sh /root/set-env.sh
         - service ssh start
         - mkdir -p /root/.ssh
         - cp /home/bty/fisslock/ssh_config /root/.ssh/config
@@ -76,12 +78,13 @@ topology:
       image: dpdk:v21.11.4
       mgmt-ipv4: 172.20.20.12
       binds:
-        - /mnt/huge:/mnt/huge
+        - /dev/hugepages:/mnt/huge
         - ~/myrepo/verinc-fisslock:/home/bty/fisslock
       cmd: sleep infinity
       ports:
         - 2212:22
       exec:
+        - cp /home/bty/fisslock/experiments/set-env.sh /root/set-env.sh
         - service ssh start
         - mkdir -p /root/.ssh
         - cp /home/bty/fisslock/ssh_config /root/.ssh/config
