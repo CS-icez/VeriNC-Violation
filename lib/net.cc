@@ -1,4 +1,3 @@
-
 #include <vector>
 
 #include <stdlib.h>
@@ -14,6 +13,7 @@
 #include <netinet/in.h>
 #include <net/if.h>
 #include <arpa/inet.h>
+#include <ctype.h>
 
 #include "net.h"
 #include "debug.h"
@@ -42,6 +42,34 @@ int packet_dispatch(post_t t, void* buf, uint32_t core) {
   return (*dispatchers[t])(buf, core);
 }
 
+static void print_hex_dump(const uint8_t* data, size_t len) {
+  char line[128];
+  for (size_t off = 0; off < len; off += 16) {
+    size_t line_len = (len - off > 16) ? 16 : (len - off);
+    size_t pos = 0;
+
+    pos += snprintf(line + pos, sizeof(line) - pos, "0x%04zx:  ", off);
+    for (size_t i = 0; i < 16; i += 2) {
+      if (i + 1 < line_len) {
+        pos += snprintf(line + pos, sizeof(line) - pos, "%02x%02x ",
+                        data[off + i], data[off + i + 1]);
+      } else if (i < line_len) {
+        pos += snprintf(line + pos, sizeof(line) - pos, "%02x   ",
+                        data[off + i]);
+      } else {
+        pos += snprintf(line + pos, sizeof(line) - pos, "     ");
+      }
+    }
+    pos += snprintf(line + pos, sizeof(line) - pos, " ");
+    for (size_t i = 0; i < line_len; i++) {
+      unsigned char c = data[off + i];
+      pos += snprintf(line + pos, sizeof(line) - pos, "%c",
+                      isprint(c) ? c : '.');
+    }
+    LOG("%s", line);
+  }
+}
+
 int net_send(host_id dest, uint64_t buf_hdl, size_t size) {
   uint32_t lcore_id = rte_lcore_id();
   struct rte_mbuf* mbuf = (struct rte_mbuf*)buf_hdl;
@@ -58,6 +86,19 @@ int net_send(host_id dest, uint64_t buf_hdl, size_t size) {
 
   mbuf->data_len = size + sizeof(struct rte_ether_hdr) + sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_udp_hdr);
   mbuf->pkt_len = size + sizeof(struct rte_ether_hdr) + sizeof(struct rte_ipv4_hdr) + sizeof(struct rte_udp_hdr);
+
+  // Print the full packet in hex + ASCII (skip multi-seg for simplicity)
+  // if (likely(mbuf->nb_segs == 1)) {
+  //   const uint8_t* pkt = rte_pktmbuf_mtod(mbuf, const uint8_t*);
+  //   size_t pkt_len = mbuf->data_len; // single segment => data_len == pkt_len
+  //   print_hex_dump(pkt, pkt_len);
+  // } else {
+  //   char msg[128];
+  //   snprintf(msg, sizeof(msg),
+  //            "0x0000:  [skip hex dump: multi-segment mbuf nb_segs=%u]",
+  //            mbuf->nb_segs);
+  //   LOG("%s", msg);
+  // }
 
   int tx_cnt = dpdk_send(mbuf);
   if (unlikely(tx_cnt != 1)) {

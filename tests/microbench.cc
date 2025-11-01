@@ -185,12 +185,17 @@ int32_t lock_requesting(void* args) {
 
           // Issue the acquire request.
           uint64_t lktsk = LKTSK(lr.lock_id, lr.txn_id);
+          if (conf.localhost_id == 2) {
+            LOG("To control timing, let host 2 sleep for 5 seconds before acquiring lock %d", lr.lock_id);
+            sleep(5);
+          }
           auto req = lock_acquire_async(lr.lock_id, lr.txn_id, op);
-          LOG("Client %d attempts to acquire lock %d", i, lr.lock_id);
+          LOG("Client %d attempts to acquire lock %d in %s mode",
+            lr.client_id, lr.lock_id, (op == LOCK_SHARED) ? "shared" : "exclusive");
 
           // Wait until the request is fulfilled.
           auto stp = chrono::steady_clock::now();
-          auto timeout = std::chrono::microseconds(10000);
+          auto timeout = std::chrono::seconds(1);
           if (req) while (1) {
             int ret = lock_req_granted(req, lr.lock_id, lr.txn_id);
 
@@ -200,20 +205,21 @@ int32_t lock_requesting(void* args) {
             if (ret == 1) break;
             // else R2_YIELD;
 
-            if (chrono::steady_clock::now() - stp > timeout) {
-              LOG("Client %d releases and re-acquires lock %d after timeout", i, lr.lock_id);
-              lock_release(lr.lock_id, lr.txn_id, op);
-              req = lock_acquire_async(lr.lock_id, lr.txn_id, op);
-              stp = chrono::steady_clock::now();
-            }
+            sleep(1);
+            LOG("Client %d releases and re-acquires lock %d in %s mode after timeout",
+              lr.client_id, lr.lock_id, (op == LOCK_SHARED) ? "shared" : "exclusive");
+            lock_release(lr.lock_id, lr.txn_id, op);
+            req = lock_acquire_async(lr.lock_id, lr.txn_id, op);
+            // stp = chrono::steady_clock::now();
           }
 
-          LOG("Client %d is granted with lock %d in %s mode", i,
+          LOG("Client %d is granted with lock %d in %s mode", lr.client_id,
             lr.lock_id, (op == LOCK_SHARED) ? "shared" : "exclusive");
-          if (think_time) delay(think_time * 1000);
+          // if (think_time) delay(think_time * 1000);
 
           // Release the lock.
-          LOG("Client %d releases lock %d", i, lr.lock_id);
+          sleep(100);
+          LOG("Client %d releases lock %d", lr.client_id, lr.lock_id);
           lock_release(lr.lock_id, lr.txn_id, op);
         }
 #ifdef RECORD_THPT_IN_TICK

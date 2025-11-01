@@ -6,29 +6,12 @@ topology:
       kind: linux
       image: dpdk:v21.11.4
       mgmt-ipv4: 172.20.20.200
+      binds:
+        - ~/myrepo/verinc-fisslock:/root/fisslock
       cmd: sleep infinity
       exec:
-        # worker1 <-> tofino128
-        - tc qdisc add dev veth-worker1 ingress
-        - tc filter add dev veth-worker1 ingress matchall action mirred egress redirect dev veth-tofino128
-        - tc qdisc add dev veth-tofino128 ingress
-        - tc filter add dev veth-tofino128 ingress matchall action mirred egress redirect dev veth-worker1
-        # worker2 <-> tofino144
-        - tc qdisc add dev veth-worker2 ingress
-        - tc filter add dev veth-worker2 ingress matchall action mirred egress redirect dev veth-tofino144
-        - tc qdisc add dev veth-tofino144 ingress
-        - tc filter add dev veth-tofino144 ingress matchall action mirred egress redirect dev veth-worker2
-        # worker3 <-> tofino160
-        # - tc qdisc add dev veth-worker3 ingress
-        # - tc filter add dev veth-worker3 ingress matchall action mirred egress redirect dev veth-tofino160
-        # - tc qdisc add dev veth-tofino160 ingress
-        # - tc filter add dev veth-tofino160 ingress matchall action mirred egress redirect dev veth-worker3
-        # worker4 <-> tofino176
-        # - tc qdisc add dev veth-worker4 ingress
-        # - tc filter add dev veth-worker4 ingress matchall action mirred egress redirect dev veth-tofino176
-        # - tc qdisc add dev veth-tofino176 ingress
-        # - tc filter add dev veth-tofino176 ingress matchall action mirred egress redirect dev veth-worker4
-    
+        - bash -c "nohup python3 -u /root/fisslock/proxy.py &> /root/fisslock/log/proxy.log &"
+
     tofino:
       kind: linux
       image: tofino:20251025
@@ -43,6 +26,7 @@ topology:
           cp fisslock-p4-build/fisslock_decider.conf $SDE_INSTALL/share/p4/targets/tofino
           cp build/fisslock_decider $SDE_INSTALL/bin
           rm $SDE_INSTALL/lib/libpltfm_mgr.so
+          rm /root/bty/fisslock/model*.log /root/bty/fisslock/bf_drivers.log*
           $SDE/run_tofino_model.sh -f ports.json -p fisslock_decider -c fisslock-p4-build/fisslock_decider.conf &> log/tofino_model.log &
           # $SDE/run_switchd.sh -p fisslock_decider -c fisslock-p4-build/fisslock_decider.conf &> log/switchd.log &
           sleep 10
@@ -59,19 +43,18 @@ topology:
       cmd: sleep infinity
       ports:
         - 2211:22
-      exec: # Not explained by shell, cannot use shell variables.
-        - bash -c "rm /home/bty/fisslock/model*.log /home/bty/fisslock/bf_drivers.log*"
+      exec: # Not explained by shell, cannot use shell syntax (e.g., variables).
         - cp /home/bty/fisslock/experiments/set-env.sh /root/set-env.sh
         - service ssh start
         - mkdir -p /root/.ssh
         - cp /home/bty/fisslock/ssh_config /root/.ssh/config
+        - sleep 5
         - bash -c "ssh-keyscan -p 22 172.20.20.11 >> /root/.ssh/known_hosts"
         - bash -c "ssh-keyscan -p 22 172.20.20.12 >> /root/.ssh/known_hosts"
         - ssh-keygen -t ed25519 -N '' -f /root/.ssh/id_ed25519
-        - sleep 5
         - sshpass -p root ssh-copy-id -i /root/.ssh/id_ed25519.pub worker1
         - sshpass -p root ssh-copy-id -i /root/.ssh/id_ed25519.pub worker2
-        - ip addr add 10.0.0.1/24 dev veth
+        # - ip addr add 10.0.0.1/24 dev veth
 
     worker2:
       kind: linux
@@ -88,42 +71,16 @@ topology:
         - service ssh start
         - mkdir -p /root/.ssh
         - cp /home/bty/fisslock/ssh_config /root/.ssh/config
+        - sleep 5
         - bash -c "ssh-keyscan -p 22 172.20.20.11 >> /root/.ssh/known_hosts"
         - bash -c "ssh-keyscan -p 22 172.20.20.12 >> /root/.ssh/known_hosts"
         - ssh-keygen -t ed25519 -N '' -f /root/.ssh/id_ed25519
-        - sleep 5
         - sshpass -p root ssh-copy-id -i /root/.ssh/id_ed25519.pub worker1
         - sshpass -p root ssh-copy-id -i /root/.ssh/id_ed25519.pub worker2
-        - ip addr add 10.0.0.2/24 dev veth
-
-    # worker3:
-    #   kind: linux
-    #   image: patrickkutch/dpdk:v21.11.4
-    #   mgmt-ipv4: 172.20.20.13
-    #   binds:
-    #     - /mnt/huge:/mnt/huge
-    #     - ~/myrepo/verinc-fisslock:/home/bty/fisslock
-    #   cmd: sleep infinity
-    #   exec:
-    #     - ip addr add 10.0.0.3/24 dev veth
-
-    # worker4:
-    #   kind: linux
-    #   image: patrickkutch/dpdk:v21.11.4
-    #   mgmt-ipv4: 172.20.20.14
-    #   binds:
-    #     - /mnt/huge:/mnt/huge
-    #     - ~/myrepo/verinc-fisslock:/home/bty/fisslock
-    #   cmd: sleep infinity
-    #   exec:
-    #     - ip addr add 10.0.0.4/24 dev veth
+        # - ip addr add 10.0.0.2/24 dev veth
 
   links:
     - endpoints: ["worker1:veth", "proxy:veth-worker1"]
     - endpoints: ["worker2:veth", "proxy:veth-worker2"]
-    # - endpoints: ["worker3:veth", "proxy:veth-worker3"]
-    # - endpoints: ["worker4:veth", "proxy:veth-worker4"]
     - endpoints: ["tofino:veth128", "proxy:veth-tofino128"]
     - endpoints: ["tofino:veth144", "proxy:veth-tofino144"]
-    # - endpoints: ["tofino:veth160", "proxy:veth-tofino160"]
-    # - endpoints: ["tofino:veth176", "proxy:veth-tofino176"]

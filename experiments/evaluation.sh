@@ -27,32 +27,34 @@ fi
 
 while :
 do
-    done_cnt=`cat tmp | grep "done" | wc -l`
+    done_cnt=`cat tmp | grep "granted" | wc -l`
     if (( done_cnt == total ))
     then
         break
     fi
-    sleep 1
+    # sleep 1
 done
 
 echo "Killing all the processes..."
 
 $MASTER_FISSLOCK_PATH/experiments/kill-all.sh
 
-while :
-do
-    exit_cnt=`cat tmp | grep "exit" | wc -l`
-    if [[ $exit_cnt == $HOST_NUM ]]
-    then
-        break
-    fi
-    sleep 1
-done
+cp tmp $FISSLOCK_LOG_PATH/violation.log
 
-echo "All processes are killed."
+# while :
+# do
+#     exit_cnt=`cat tmp | grep "exit" | wc -l`
+#     if [[ $exit_cnt == $HOST_NUM ]]
+#     then
+#         break
+#     fi
+#     sleep 1
+# done
 
-mkdir -p $RESULT_PATH/$benchmark
-$MASTER_FISSLOCK_PATH/experiments/results/throughput-calculator.sh "throughput"\
-    > $RESULT_PATH/$benchmark/thpt
+# echo "All processes are killed."
 
-$MASTER_FISSLOCK_PATH/experiments/results/collect-results.sh $system_name $benchmark $think_time
+# mkdir -p $RESULT_PATH/$benchmark
+# $MASTER_FISSLOCK_PATH/experiments/results/throughput-calculator.sh "throughput"\
+#     > $RESULT_PATH/$benchmark/thpt
+
+# $MASTER_FISSLOCK_PATH/experiments/results/collect-results.sh $system_name $benchmark $think_time

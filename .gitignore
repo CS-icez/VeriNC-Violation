@@ -55,5 +55,5 @@ traces/*tpcc*
 clab-fisslock/
 *.annotations.json
 zlog-cfg-cur
-pcap_output/
+pcap*/
 results/

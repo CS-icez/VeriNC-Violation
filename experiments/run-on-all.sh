@@ -91,7 +91,7 @@ echo "Waiting for all clients to start..."
 
 # Wait until all clients have started. The time interval is machine-specific,
 # make sure it is long enough for all clients to boot.
-sleep 10
+sleep 5
 ###############################################################################
 
 echo "Sending start signal to all clients..."
