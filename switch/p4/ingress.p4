@@ -196,7 +196,7 @@ control IngressPipe(
             } else {
 
                 // Access the free RA.
-                if (hdr.lock.type != FREE) {
+                if (hdr.lock.type != FREE && hdr.lock.type != RELEASE) {
                     acquire_table.apply();
                 } else {
                     release_table.apply();

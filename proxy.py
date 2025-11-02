@@ -66,6 +66,7 @@ def print_pkt(pkt: bytes):
 def process_pkt(pkt: bytes, in_if: str):
     if pkt[0] == 0x33 and pkt[1] == 0x33:
         # IPv6 multicast packet, drop it
+        # print(f'Dropping IPv6 multicast packet from {in_if}')
         return
     print(f'[{rel_time_str()}]Packet received from {in_if}:')
     print_pkt(pkt)
@@ -128,7 +129,7 @@ def process_worker1(pkt: bytes, in_if: str):
         start_time_ns = time.time_ns()
         host1_state = 1
         print(f'[{rel_time_str()}]host1_state: 0 -> 1')
-        delay_send(host1_acquire, out_if, 2_000_000_000, cb_acquire)
+        delay_send(host1_acquire, out_if, 1_200_000_000, cb_acquire)
         return
 
     def cb_release():
@@ -142,7 +143,7 @@ def process_worker1(pkt: bytes, in_if: str):
             return
         print(f'[{rel_time_str()}]host1_state: 1 -> 2')
         host1_state = 2
-        delay_send(pkt, out_if, 2_000_000_000, cb_release)
+        delay_send(pkt, out_if, 500_000_000, cb_release)
         return
 
     print('Dropping packet from worker1')

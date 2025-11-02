@@ -79,8 +79,8 @@ control LockOperation_1(
             (ACQUIRE, LOCK_EXCL, LOCK_ACQUIRED, LOCK_SHARED): fwd_to_agent();
             (ACQUIRE, LOCK_EXCL, LOCK_ACQUIRED, LOCK_EXCL): fwd_to_agent();
 
-            (RELEASE, 0, LOCK_ACQUIRED, LOCK_SHARED): fwd_to_agent();
-            (RELEASE, 0, LOCK_ACQUIRED, LOCK_EXCL): fwd_to_agent();
+            // (RELEASE, 0, LOCK_ACQUIRED, LOCK_SHARED): fwd_to_agent();
+            // (RELEASE, 0, LOCK_ACQUIRED, LOCK_EXCL): fwd_to_agent();
 
             (TRANSFER, LOCK_SHARED, LOCK_ACQUIRED, LOCK_SHARED): transfer_agent();
             (TRANSFER, LOCK_SHARED, LOCK_ACQUIRED, LOCK_EXCL): transfer_agent();
@@ -91,6 +91,11 @@ control LockOperation_1(
             (FREE, LOCK_SHARED, LOCK_ACQUIRED, LOCK_EXCL): reset_agent();
             (FREE, LOCK_EXCL, LOCK_ACQUIRED, LOCK_SHARED): reset_agent();
             (FREE, LOCK_EXCL, LOCK_ACQUIRED, LOCK_EXCL): reset_agent();
+
+            (RELEASE, 0, LOCK_ACQUIRED, LOCK_SHARED): reset_agent();
+            (RELEASE, 0, LOCK_ACQUIRED, LOCK_EXCL): reset_agent();
+            (RELEASE, 0, LOCK_FREE, LOCK_SHARED): reset_agent();
+            (RELEASE, 0, LOCK_FREE, LOCK_EXCL): reset_agent();
         }
 
         const default_action = nop;
@@ -183,8 +188,8 @@ control LockOperation_2(
             (ACQUIRE, LOCK_EXCL, LOCK_ACQUIRED, LOCK_SHARED): fwd_to_agent();
             (ACQUIRE, LOCK_EXCL, LOCK_ACQUIRED, LOCK_EXCL): fwd_to_agent();
 
-            (RELEASE, 0, LOCK_ACQUIRED, LOCK_SHARED): fwd_to_agent();
-            (RELEASE, 0, LOCK_ACQUIRED, LOCK_EXCL): fwd_to_agent();
+            // (RELEASE, 0, LOCK_ACQUIRED, LOCK_SHARED): fwd_to_agent();
+            // (RELEASE, 0, LOCK_ACQUIRED, LOCK_EXCL): fwd_to_agent();
 
             (TRANSFER, LOCK_SHARED, LOCK_ACQUIRED, LOCK_SHARED): transfer_agent();
             (TRANSFER, LOCK_SHARED, LOCK_ACQUIRED, LOCK_EXCL): transfer_agent();
@@ -195,6 +200,11 @@ control LockOperation_2(
             (FREE, LOCK_SHARED, LOCK_ACQUIRED, LOCK_EXCL): reset_agent();
             (FREE, LOCK_EXCL, LOCK_ACQUIRED, LOCK_SHARED): reset_agent();
             (FREE, LOCK_EXCL, LOCK_ACQUIRED, LOCK_EXCL): reset_agent();
+
+            (RELEASE, 0, LOCK_ACQUIRED, LOCK_SHARED): reset_agent();
+            (RELEASE, 0, LOCK_ACQUIRED, LOCK_EXCL): reset_agent();
+            (RELEASE, 0, LOCK_FREE, LOCK_SHARED): reset_agent();
+            (RELEASE, 0, LOCK_FREE, LOCK_EXCL): reset_agent();
         }
 
         const default_action = nop;
@@ -287,8 +297,8 @@ control LockOperation_3(
             (ACQUIRE, LOCK_EXCL, LOCK_ACQUIRED, LOCK_SHARED): fwd_to_agent();
             (ACQUIRE, LOCK_EXCL, LOCK_ACQUIRED, LOCK_EXCL): fwd_to_agent();
 
-            (RELEASE, 0, LOCK_ACQUIRED, LOCK_SHARED): fwd_to_agent();
-            (RELEASE, 0, LOCK_ACQUIRED, LOCK_EXCL): fwd_to_agent();
+            // (RELEASE, 0, LOCK_ACQUIRED, LOCK_SHARED): fwd_to_agent();
+            // (RELEASE, 0, LOCK_ACQUIRED, LOCK_EXCL): fwd_to_agent();
 
             (TRANSFER, LOCK_SHARED, LOCK_ACQUIRED, LOCK_SHARED): transfer_agent();
             (TRANSFER, LOCK_SHARED, LOCK_ACQUIRED, LOCK_EXCL): transfer_agent();
@@ -299,6 +309,11 @@ control LockOperation_3(
             (FREE, LOCK_SHARED, LOCK_ACQUIRED, LOCK_EXCL): reset_agent();
             (FREE, LOCK_EXCL, LOCK_ACQUIRED, LOCK_SHARED): reset_agent();
             (FREE, LOCK_EXCL, LOCK_ACQUIRED, LOCK_EXCL): reset_agent();
+
+            (RELEASE, 0, LOCK_ACQUIRED, LOCK_SHARED): reset_agent();
+            (RELEASE, 0, LOCK_ACQUIRED, LOCK_EXCL): reset_agent();
+            (RELEASE, 0, LOCK_FREE, LOCK_SHARED): reset_agent();
+            (RELEASE, 0, LOCK_FREE, LOCK_EXCL): reset_agent();
         }
 
         const default_action = nop;

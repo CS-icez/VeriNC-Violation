@@ -182,16 +182,21 @@ int32_t lock_requesting(void* args) {
 
         // We ignore unlock instructions in the microbenchmark.
         if (lr.action_type == 0) {
+          auto start_time = chrono::steady_clock::now();
+          #define TIME_US() \
+            static_cast<int>(chrono::duration_cast<chrono::microseconds>(\
+              chrono::steady_clock::now() - start_time).count())
 
           // Issue the acquire request.
           uint64_t lktsk = LKTSK(lr.lock_id, lr.txn_id);
           if (conf.localhost_id == 2) {
-            LOG("To control timing, let host 2 sleep for 5 seconds before acquiring lock %d", lr.lock_id);
-            sleep(5);
+            LOG("[%07d]To control timing, let host 2 sleep for 1.8 seconds before acquiring lock %d",
+              TIME_US(), lr.lock_id);
+            usleep(1800 * 1000);
           }
           auto req = lock_acquire_async(lr.lock_id, lr.txn_id, op);
-          LOG("Client %d attempts to acquire lock %d in %s mode",
-            lr.client_id, lr.lock_id, (op == LOCK_SHARED) ? "shared" : "exclusive");
+          LOG("[%07d]Client %d attempts to acquire lock %d in %s mode",
+            TIME_US(), lr.client_id, lr.lock_id, (op == LOCK_SHARED) ? "shared" : "exclusive");
 
           // Wait until the request is fulfilled.
           auto stp = chrono::steady_clock::now();
@@ -205,21 +210,23 @@ int32_t lock_requesting(void* args) {
             if (ret == 1) break;
             // else R2_YIELD;
 
-            sleep(1);
-            LOG("Client %d releases and re-acquires lock %d in %s mode after timeout",
-              lr.client_id, lr.lock_id, (op == LOCK_SHARED) ? "shared" : "exclusive");
-            lock_release(lr.lock_id, lr.txn_id, op);
-            req = lock_acquire_async(lr.lock_id, lr.txn_id, op);
-            // stp = chrono::steady_clock::now();
+            if (chrono::steady_clock::now() - stp > timeout) {
+              LOG("[%07d]Client %d releases and re-acquires lock %d in %s mode after timeout",
+                TIME_US(), lr.client_id, lr.lock_id, (op == LOCK_SHARED) ? "shared" : "exclusive");
+              lock_release(lr.lock_id, lr.txn_id, op);
+              req = lock_acquire_async(lr.lock_id, lr.txn_id, op);
+              stp = chrono::steady_clock::now();
+            } else {
+              usleep(10000);
+            }
           }
 
-          LOG("Client %d is granted with lock %d in %s mode", lr.client_id,
+          LOG("[%07d]Client %d is granted with lock %d in %s mode", TIME_US(), lr.client_id,
             lr.lock_id, (op == LOCK_SHARED) ? "shared" : "exclusive");
           // if (think_time) delay(think_time * 1000);
 
           // Release the lock.
-          sleep(100);
-          LOG("Client %d releases lock %d", lr.client_id, lr.lock_id);
+          LOG("[%07d]Client %d releases lock %d", TIME_US(), lr.client_id, lr.lock_id);
           lock_release(lr.lock_id, lr.txn_id, op);
         }
 #ifdef RECORD_THPT_IN_TICK

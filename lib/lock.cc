@@ -395,6 +395,8 @@ int lock_packet_process(post_header* ph, lock_desc lock,
     // the lock request to us.
     case POST_LOCK_ACQUIRE:
     {
+      LOG("Received POST_LOCK_ACQUIRE packet for lock %d from host %u task %u",
+        id(lock), hdr->machine_id, hdr->task_id);
       unique_lock<mutex> lk(lmeta(lock)->mtx);
       LOCK_LOG(id(lock), hdr->task_id, "received acquire request from host %u",
         hdr->machine_id);
@@ -497,6 +499,8 @@ int lock_packet_process(post_header* ph, lock_desc lock,
     // The switch grant the lock and the agent to us.
     case POST_LOCK_GRANT_WITH_AGENT:
     {
+      LOG("Received POST_LOCK_GRANT_WITH_AGENT packet for lock %d from host %u task %u",
+        id(lock), hdr->machine_id, hdr->task_id);
       // Do not process packets for failure recovery.
       if (hdr->task_id == TASK_FOR_RESTORE) return 0;
 
@@ -563,6 +567,8 @@ int lock_packet_process(post_header* ph, lock_desc lock,
     // The switch grant the lock but not the agent to us.
     case POST_LOCK_GRANT_WO_AGENT:
     {
+      LOG("Received POST_LOCK_GRANT_WO_AGENT packet for lock %d from host %u task %u",
+        id(lock), hdr->machine_id, hdr->task_id);
       timer_grant_begin(id(lock), hdr->task_id);
       ASSERT(hdr->machine_id == LOCALHOST_ID);
       LOCK_LOG(id(lock), hdr->task_id, "received grant without agent packet");
@@ -589,6 +595,8 @@ int lock_packet_process(post_header* ph, lock_desc lock,
     // Handle release requests as the agent.
     case POST_LOCK_RELEASE:
     {
+      LOG("Received POST_LOCK_RELEASE packet for lock %d from host %u task %u",
+        id(lock), hdr->machine_id, hdr->task_id);
       unique_lock<mutex> lk(lmeta(lock)->mtx);
       LOCK_LOG(id(lock), hdr->task_id, "received release packet from host %u",
         hdr->machine_id);
@@ -677,6 +685,9 @@ int lock_packet_process(post_header* ph, lock_desc lock,
     case POST_LOCK_TRANSFER:
     case POST_LOCK_FREE:
     {
+      LOG("Received %s packet for lock %d from host %u task %u",
+        ph->type == POST_LOCK_TRANSFER ? "POST_LOCK_TRANSFER" : "POST_LOCK_FREE",
+        id(lock), hdr->machine_id, hdr->task_id);
       unique_lock<mutex> lk(lmeta(lock)->mtx);
       LOCK_LOG(id(lock), hdr->task_id, "task transfer or free failed");
 
