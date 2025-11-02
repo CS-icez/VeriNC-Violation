@@ -190,8 +190,8 @@ int32_t lock_requesting(void* args) {
           // Issue the acquire request.
           uint64_t lktsk = LKTSK(lr.lock_id, lr.txn_id);
           if (conf.localhost_id == 2) {
-            LOG("[%07d]To control timing, let host 2 sleep for 1.8 seconds before acquiring lock %d",
-              TIME_US(), lr.lock_id);
+            // LOG("[%07d]To control timing, let host 2 sleep for 1.8 seconds before acquiring lock %d",
+            //   TIME_US(), lr.lock_id);
             usleep(1800 * 1000);
           }
           auto req = lock_acquire_async(lr.lock_id, lr.txn_id, op);
@@ -224,6 +224,7 @@ int32_t lock_requesting(void* args) {
           LOG("[%07d]Client %d is granted with lock %d in %s mode", TIME_US(), lr.client_id,
             lr.lock_id, (op == LOCK_SHARED) ? "shared" : "exclusive");
           // if (think_time) delay(think_time * 1000);
+          sleep(1);
 
           // Release the lock.
           LOG("[%07d]Client %d releases lock %d", TIME_US(), lr.client_id, lr.lock_id);
