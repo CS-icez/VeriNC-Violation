@@ -1,0 +1,17 @@
+ucli
+port-add 1/0 100G RS
+an-set 1/0 1
+port-enb 1/0
+port-add 3/0 100G RS
+an-set 3/0 1
+port-enb 3/0
+port-add 5/0 100G RS
+an-set 5/0 1
+port-enb 5/0
+port-add 7/0 100G RS
+an-set 7/0 1
+port-enb 7/0
+port-add 25/0 100G RS
+an-set 25/0 1
+port-loopback 25/0 mac-near
+port-enb 25/0
