@@ -62,6 +62,9 @@ int packet_dispatch(lock_post_header* message_header) {
     if (!dispatchers[POST_MEM_DIFF]) return 0;
     else (*dispatchers[POST_MEM_DIFF])(message_header, lcore_id);
   }
+  if (message_header->op_type == RELEASE_REPLY) {
+    set_release_replied(true);
+  }
   return 0;
 }
 

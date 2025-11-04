@@ -11,6 +11,8 @@ void init_lock_wait_table(uint32_t lock_id);
 void add_to_wait_queue(uint32_t lcore_id, uint32_t lock_id, uint32_t requester);
 void coroutine_wait_queue_signal(uint32_t lcore_id, uint32_t lock_id, uint32_t requester);
 bool lock_req_granted(lock_req req, uint32_t lid, uint32_t tid);
+bool lock_release_replied(lock_req req, uint32_t lid, uint32_t tid);
+void set_release_replied(bool value);
 
 #ifdef __cplusplus
 }

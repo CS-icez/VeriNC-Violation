@@ -37,11 +37,11 @@ int lock_packet_dispatch(void* buf, uint32_t lcore_id) {
 
     timer_grant_begin(lock_id, txn_id);
     if (message_header->op_type == DIRECT_GRANT_FROM_SWITCH) {
-        LOG("DIRECT_GRANT_FROM_SWITCH: lock_id=%u, txn_id=%u", lock_id, txn_id);
+        // LOG("DIRECT_GRANT_FROM_SWITCH: lock_id=%u, txn_id=%u", lock_id, txn_id);
         timer_switch_direct_grant(lock_id, txn_id);
         count_switch_direct_grant();
     } else if (message_header->op_type == GRANT_LOCK_FROM_SERVER) {
-        LOG("GRANT_LOCK_FROM_SERVER: lock_id=%u, txn_id=%u", lock_id, txn_id);
+        // LOG("GRANT_LOCK_FROM_SERVER: lock_id=%u, txn_id=%u", lock_id, txn_id);
         timer_grant_wo_agent(lock_id, txn_id);
     } else {
         return 0;

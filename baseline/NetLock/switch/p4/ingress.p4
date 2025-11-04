@@ -673,6 +673,11 @@ control ReleaseLock(
         ig_intr_tm_md.bypass_egress = 1w1;
     }
 
+    action reply_to_client_action() {
+        hdr.ipv4.dstAddr = hdr.ipv4.srcAddr;
+        hdr.nlk_hdr.op = RELEASE_REPLY;
+    }
+
     action mark_to_resubmit_action() {
         hdr.nlk_hdr.recirc_flag = 1;
         hdr.recirculate_hdr.setValid();
@@ -957,6 +962,14 @@ control ReleaseLock(
         size = 1;
     }
 
+    table reply_to_client_table {
+        actions = {
+            reply_to_client_action;
+        }
+        const default_action = reply_to_client_action;
+        size = 1;
+    }
+
     apply {
         if (hdr.nlk_hdr.recirc_flag == 0) {
             // ig_md.recirc_flag = 0; // TODO
@@ -1065,7 +1078,8 @@ control ReleaseLock(
 
             // ** drop the original packet
             if (ig_md.do_resubmit == 0) {
-                drop_packet_table.apply();
+                // drop_packet_table.apply();
+                reply_to_client_table.apply();
             }
         }
     }

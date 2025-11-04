@@ -82,3 +82,17 @@ bool lock_req_granted(lock_req req, uint32_t lid, uint32_t tid) {
     return result;
 #endif
 }
+
+// Here we use a stub implementation.
+static bool replied = false;
+
+bool lock_release_replied(lock_req req, uint32_t lid, uint32_t tid) {
+    (void)req;
+    (void)lid;
+    (void)tid;
+    return replied;
+}
+
+void set_release_replied(bool value) {
+    replied = value;
+}

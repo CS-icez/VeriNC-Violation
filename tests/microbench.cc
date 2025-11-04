@@ -228,8 +228,12 @@ int32_t lock_requesting(void* args) {
           // sleep(1);
 
           // Release the lock.
-          LOG("[%07d]Client %d releases lock %d", TIME_US(), lr.client_id, lr.lock_id);
-          lock_release(lr.lock_id, lr.txn_id, op);
+          LOG("[%07d]Client %d attempts to release lock %d", TIME_US(), lr.client_id, lr.lock_id);
+          while (!lock_release_replied(0, lr.lock_id, lr.txn_id)) {
+            lock_release(lr.lock_id, lr.txn_id, op);
+            sleep(1);
+          }
+          LOG("[%07d]Client %d is acknowledged as having released lock %d", TIME_US(), lr.client_id, lr.lock_id);
         }
 #ifdef RECORD_THPT_IN_TICK
         i += coroutine_num;
