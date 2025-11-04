@@ -200,7 +200,7 @@ int32_t lock_requesting(void* args) {
 
           // Wait until the request is fulfilled.
           if (req) while (1) {
-            sleep(1);
+            usleep(1000);
             int ret = lock_req_granted(req, lr.lock_id, lr.txn_id);
 
             // Aborted, re-acquire.
@@ -233,7 +233,7 @@ int32_t lock_requesting(void* args) {
               lock_release(lr.lock_id, lr.txn_id, op);
               stp = chrono::steady_clock::now();
             } else {
-              usleep(100000);
+              usleep(1000);
             }
           }
           LOG("[%07d]Client %d is acknowledged as having released lock %d", TIME_US(), lr.client_id, lr.lock_id);
