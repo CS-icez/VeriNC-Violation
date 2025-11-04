@@ -20,7 +20,7 @@ echo $PASSWORD | sudo -S -E \
   MAX_LOCK_NUM=$max_lock_num \
   ${binary} \
   --vdev="net_af_packet0,iface=veth" \
-  --socket-mem=32 \
+  --socket-mem=16 \
   --file-prefix=node$host_id \
   --lcores $lcore_map \
   --log-level=4 \

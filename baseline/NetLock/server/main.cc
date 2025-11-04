@@ -100,7 +100,7 @@ void sigsegv_setup() {
 }
 
 void sigsegv_handler(int signum, siginfo_t* info, void* context) {
-    report_counters();
+    // report_counters();
     report_timer();
     fflush(stderr);
     fflush(stdout);
@@ -180,12 +180,12 @@ int main(int argc, char *argv[]) {
 #endif
 
     TX_CORE_NUM = 0;
-    RX_CORE_NUM = 8;
+    RX_CORE_NUM = 1;
     LOG("Server using %d rx cores", RX_CORE_NUM);
 
     dpdk_setup(argc, argv);
 
-    register_flow(LK_PORT, 0, 7);
+    // register_flow(LK_PORT, 0, 7);
 
     init_all_locks();
 

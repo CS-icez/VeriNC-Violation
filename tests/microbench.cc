@@ -192,7 +192,7 @@ int32_t lock_requesting(void* args) {
           if (conf.localhost_id == 2) {
             // LOG("[%07d]To control timing, let host 2 sleep for 1.8 seconds before acquiring lock %d",
             //   TIME_US(), lr.lock_id);
-            usleep(1800 * 1000);
+            // usleep(1800 * 1000);
           }
           auto req = lock_acquire_async(lr.lock_id, lr.txn_id, op);
           LOG("[%07d]Client %d attempts to acquire lock %d in %s mode",
@@ -202,6 +202,7 @@ int32_t lock_requesting(void* args) {
           auto stp = chrono::steady_clock::now();
           auto timeout = std::chrono::seconds(1);
           if (req) while (1) {
+            usleep(1000 * 1000);
             int ret = lock_req_granted(req, lr.lock_id, lr.txn_id);
 
             // Aborted, re-acquire.
@@ -210,21 +211,21 @@ int32_t lock_requesting(void* args) {
             if (ret == 1) break;
             // else R2_YIELD;
 
-            if (chrono::steady_clock::now() - stp > timeout) {
-              LOG("[%07d]Client %d releases and re-acquires lock %d in %s mode after timeout",
-                TIME_US(), lr.client_id, lr.lock_id, (op == LOCK_SHARED) ? "shared" : "exclusive");
-              lock_release(lr.lock_id, lr.txn_id, op);
-              req = lock_acquire_async(lr.lock_id, lr.txn_id, op);
-              stp = chrono::steady_clock::now();
-            } else {
-              usleep(10000);
-            }
+            // if (chrono::steady_clock::now() - stp > timeout) {
+            //   LOG("[%07d]Client %d releases and re-acquires lock %d in %s mode after timeout",
+            //     TIME_US(), lr.client_id, lr.lock_id, (op == LOCK_SHARED) ? "shared" : "exclusive");
+            //   lock_release(lr.lock_id, lr.txn_id, op);
+            //   req = lock_acquire_async(lr.lock_id, lr.txn_id, op);
+            //   stp = chrono::steady_clock::now();
+            // } else {
+            //   usleep(10000);
+            // }
           }
 
           LOG("[%07d]Client %d is granted with lock %d in %s mode", TIME_US(), lr.client_id,
             lr.lock_id, (op == LOCK_SHARED) ? "shared" : "exclusive");
-          // if (think_time) delay(think_time * 1000);
-          sleep(1);
+          if (think_time) delay(think_time * 1000);
+          // sleep(1);
 
           // Release the lock.
           LOG("[%07d]Client %d releases lock %d", TIME_US(), lr.client_id, lr.lock_id);
@@ -340,11 +341,11 @@ int main(int argc, char* argv[]) {
 
 #ifdef NETLOCK
   if (LOCALHOST_ID == 1) {
-    env_setup(argc, argv, 4, 4);
-    register_flow(LK_PORT, 0, 3);
+    env_setup(argc, argv, 1, 1);
+    // register_flow(LK_PORT, 0, 3);
   } else {
-    env_setup(argc, argv, 6, 6);
-    register_flow(LK_PORT, 0, 5);
+    env_setup(argc, argv, 1, 1);
+    // register_flow(LK_PORT, 0, 5);
   }
 #else
   env_setup(argc, argv, DPDK_LCORE_TX_NUM, DPDK_LCORE_RX_NUM);
@@ -375,6 +376,7 @@ int main(int argc, char* argv[]) {
   int ret;
   rte_eal_mp_remote_launch(main_loop, NULL, CALL_MAIN);
   RTE_LCORE_FOREACH_WORKER(lcore_id) {
+      LOG("waiting for lcore %u to finish...", lcore_id);
       if (rte_eal_wait_lcore(lcore_id) < 0) {
           ERROR("lcore %u return error", lcore_id);
           ret = -1;

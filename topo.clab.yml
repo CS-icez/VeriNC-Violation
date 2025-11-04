@@ -1,4 +1,4 @@
-name: fisslock
+name: netlock
 
 topology:
   nodes:
@@ -7,10 +7,10 @@ topology:
       image: dpdk:v21.11.4
       mgmt-ipv4: 172.20.20.200
       binds:
-        - ~/myrepo/verinc-fisslock:/root/fisslock
+        - ~/myrepo/verinc-netlock:/root/netlock
       cmd: sleep infinity
       exec:
-        - bash -c "nohup python3 -u /root/fisslock/proxy.py &> /root/fisslock/log/proxy.log &"
+        - bash -c "nohup python3 -u /root/netlock/proxy.py &> /root/netlock/log/proxy.log &"
 
     tofino:
       kind: linux
@@ -18,45 +18,32 @@ topology:
       mgmt-ipv4: 172.20.20.100
       binds:
         - /dev/hugepages:/mnt/huge
-        - ~/myrepo/verinc-fisslock:/root/bty/fisslock
+        - ~/myrepo/verinc-netlock:/root/bty/netlock
       cmd: |
           bash -ic "
-          mkdir /tmp
-          cd /root/bty/fisslock
-          cp fisslock-p4-build/fisslock_decider.conf $SDE_INSTALL/share/p4/targets/tofino
-          cp build/fisslock_decider $SDE_INSTALL/bin
+          mkdir -p /tmp /run/sshd
+          service ssh start
+          cd /root/bty/netlock
+          cp netlock-p4-build/netlock.conf $SDE_INSTALL/share/p4/targets/tofino
           rm $SDE_INSTALL/lib/libpltfm_mgr.so
-          rm /root/bty/fisslock/model*.log /root/bty/fisslock/bf_drivers.log*
-          $SDE/run_tofino_model.sh -f ports.json -p fisslock_decider -c fisslock-p4-build/fisslock_decider.conf &> log/tofino_model.log &
-          # $SDE/run_switchd.sh -p fisslock_decider -c fisslock-p4-build/fisslock_decider.conf &> log/switchd.log &
-          sleep 10
-          bash switch/run_decider.sh -p fisslock_decider -s switch/port-setup.bfsh
-          sleep infinity
+          rm /root/bty/netlock/model*.log /root/bty/netlock/bf_drivers.log*
+          $SDE/run_tofino_model.sh -f ports.json -p netlock &> log/tofino_model.log &
+          sleep 3
+          bash switch/run_lockmgr.sh -p netlock
           "
+      exec:
+        - bash -ic "cd /root/bty/netlock && $SDE/run_p4_tests.sh -f `pwd`/ports.json -p netlock -t `pwd`/baseline/NetLock/switch/control --test-params=\"bm='micro'\""
+
     worker1:
       kind: linux
       image: dpdk:v21.11.4
       mgmt-ipv4: 172.20.20.11
       binds:
         - /dev/hugepages:/mnt/huge
-        - ~/myrepo/verinc-fisslock:/home/bty/fisslock
+        - ~/myrepo/verinc-netlock:/home/bty/netlock
       cmd: sleep infinity
-      ports:
-        - 2211:22
-      exec: # Not explained by shell, cannot use shell syntax (e.g., variables).
-        - cp /home/bty/fisslock/experiments/set-env.sh /root/set-env.sh
-        - service ssh start
-        - mkdir -p /root/.ssh
-        - cp /home/bty/fisslock/ssh_config /root/.ssh/config
-        - sleep 5
-        - bash -c "ssh-keyscan -p 22 172.20.20.11 >> /root/.ssh/known_hosts"
-        - bash -c "ssh-keyscan -p 22 172.20.20.12 >> /root/.ssh/known_hosts"
-        - ssh-keygen -t ed25519 -N '' -f /root/.ssh/id_ed25519
-        - sshpass -p root ssh-copy-id -i /root/.ssh/id_ed25519.pub worker1
-        - sshpass -p root ssh-copy-id -i /root/.ssh/id_ed25519.pub worker2
-        - sleep 30
-        - bash -c "cd /home/bty/fisslock/experiments/ && source set-env.sh && ./evaluation.sh fisslock violation 0 1"
-        # - ip addr add 10.0.0.1/24 dev veth
+      exec:
+        - bash /home/bty/netlock/worker_exec.sh
 
     worker2:
       kind: linux
@@ -64,25 +51,40 @@ topology:
       mgmt-ipv4: 172.20.20.12
       binds:
         - /dev/hugepages:/mnt/huge
-        - ~/myrepo/verinc-fisslock:/home/bty/fisslock
+        - ~/myrepo/verinc-netlock:/home/bty/netlock
       cmd: sleep infinity
-      ports:
-        - 2212:22
       exec:
-        - cp /home/bty/fisslock/experiments/set-env.sh /root/set-env.sh
-        - service ssh start
-        - mkdir -p /root/.ssh
-        - cp /home/bty/fisslock/ssh_config /root/.ssh/config
-        - sleep 5
-        - bash -c "ssh-keyscan -p 22 172.20.20.11 >> /root/.ssh/known_hosts"
-        - bash -c "ssh-keyscan -p 22 172.20.20.12 >> /root/.ssh/known_hosts"
-        - ssh-keygen -t ed25519 -N '' -f /root/.ssh/id_ed25519
-        - sshpass -p root ssh-copy-id -i /root/.ssh/id_ed25519.pub worker1
-        - sshpass -p root ssh-copy-id -i /root/.ssh/id_ed25519.pub worker2
-        # - ip addr add 10.0.0.2/24 dev veth
+        - bash /home/bty/netlock/worker_exec.sh
+
+    worker3:
+      kind: linux
+      image: dpdk:v21.11.4
+      mgmt-ipv4: 172.20.20.13
+      binds:
+        - /dev/hugepages:/mnt/huge
+        - ~/myrepo/verinc-netlock:/home/bty/netlock
+      cmd: sleep infinity
+      exec:
+        - bash /home/bty/netlock/worker_exec.sh
+
+    worker4:
+      kind: linux
+      image: dpdk:v21.11.4
+      mgmt-ipv4: 172.20.20.14
+      binds:
+        - /dev/hugepages:/mnt/huge
+        - ~/myrepo/verinc-netlock:/home/bty/netlock
+      cmd: sleep infinity
+      exec:
+        - bash /home/bty/netlock/worker_exec.sh
 
   links:
     - endpoints: ["worker1:veth", "proxy:veth-worker1"]
     - endpoints: ["worker2:veth", "proxy:veth-worker2"]
+    - endpoints: ["worker3:veth", "proxy:veth-worker3"]
+    - endpoints: ["worker4:veth", "proxy:veth-worker4"]
     - endpoints: ["tofino:veth128", "proxy:veth-tofino128"]
     - endpoints: ["tofino:veth144", "proxy:veth-tofino144"]
+    - endpoints: ["tofino:veth160", "proxy:veth-tofino160"]
+    - endpoints: ["tofino:veth176", "proxy:veth-tofino176"]
+    - endpoints: ["tofino:veth188", "proxy:veth-tofino188"] # Loopback port.

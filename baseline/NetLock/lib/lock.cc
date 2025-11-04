@@ -21,6 +21,7 @@ int lock_packet_dispatch(void* buf, uint32_t lcore_id) {
     lock_post_header* message_header = static_cast<lock_post_header*>(buf);
     uint32_t lock_id = ntohl(message_header->lock_id);
     uint32_t txn_id = ntohl(message_header->txn_id);
+    // LOG("lock_packet_dispatch: lock_id=%u, txn_id=%u, op_type=%u", lock_id, txn_id, message_header->op_type);
 
     // Execute the application-defined preprocessor
     if (packet_preprocess != NULL) {
@@ -36,9 +37,11 @@ int lock_packet_dispatch(void* buf, uint32_t lcore_id) {
 
     timer_grant_begin(lock_id, txn_id);
     if (message_header->op_type == DIRECT_GRANT_FROM_SWITCH) {
+        LOG("DIRECT_GRANT_FROM_SWITCH: lock_id=%u, txn_id=%u", lock_id, txn_id);
         timer_switch_direct_grant(lock_id, txn_id);
         count_switch_direct_grant();
     } else if (message_header->op_type == GRANT_LOCK_FROM_SERVER) {
+        LOG("GRANT_LOCK_FROM_SERVER: lock_id=%u, txn_id=%u", lock_id, txn_id);
         timer_grant_wo_agent(lock_id, txn_id);
     } else {
         return 0;

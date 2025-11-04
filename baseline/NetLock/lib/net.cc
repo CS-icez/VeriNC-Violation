@@ -29,6 +29,8 @@ const uint8_t host_list[8] = {1, 2, 3, 4, 5, 6, 7, 8};
 const char* ip_list[8] = {
   "192.168.1.1", // worker1
   "192.168.1.2", // worker2
+  "192.168.1.3", // worker3
+  "192.168.1.4", // worker4
   // "10.0.2.2", // pro2_1
   // "10.0.2.3", // pro3_1
   // "10.0.2.5", // pro0_2
@@ -50,6 +52,7 @@ void register_packet_dispatcher(post_t t, dispatcher_f f) {
 }
 
 int packet_dispatch(lock_post_header* message_header) {
+  // LOG("packet_dispatch: op_type=%d", message_header->op_type);
   uint32_t lcore_id = rte_lcore_id();
   if (message_header->op_type == GRANT_LOCK_FROM_SERVER 
     || message_header->op_type == DIRECT_GRANT_FROM_SWITCH) {
@@ -112,6 +115,7 @@ int net_poll_packets() {
   struct rte_mbuf* mbuf_received_burst[DPDK_RX_BURST_SIZE];
   int nb_rx = dpdk_poll_recvs(mbuf_received_burst);
   for (int i = 0; i < nb_rx; i++) {
+    // LOG("net_poll_packets: received a packet");
     mbuf_received = mbuf_received_burst[i];
     rte_prefetch0(rte_pktmbuf_mtod(mbuf_received, void *));
     struct rte_udp_hdr* udp_hdr = (struct rte_udp_hdr*)(rte_pktmbuf_mtod(mbuf_received, uint8_t*) + 

@@ -9,3 +9,21 @@ Host worker2
     User root
     Port 22
     IdentityFile ~/.ssh/id_ed25519
+
+Host worker3
+    HostName 172.20.20.13
+    User root
+    Port 22
+    IdentityFile ~/.ssh/id_ed25519
+
+Host worker4
+    HostName 172.20.20.14
+    User root
+    Port 22
+    IdentityFile ~/.ssh/id_ed25519
+
+Host tofino
+    HostName 172.20.20.100
+    User root
+    Port 22
+    IdentityFile ~/.ssh/id_ed25519

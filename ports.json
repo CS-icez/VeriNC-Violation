@@ -15,6 +15,10 @@
         {
             "device_port": 176,
             "if": "veth176"
+        },
+        {
+            "device_port": 188,
+            "if": "veth188"
         }
     ]
 }

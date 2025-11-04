@@ -8,6 +8,9 @@ import threading
 veth_pairs = [
     ('veth-worker1', 'veth-tofino128'),
     ('veth-worker2', 'veth-tofino144'),
+    ('veth-worker3', 'veth-tofino160'),
+    ('veth-worker4', 'veth-tofino176'),
+    ('veth-tofino188', 'veth-tofino188'),  # Loopback port.
 ]
 
 out_if_map = {}
@@ -64,20 +67,23 @@ def print_pkt(pkt: bytes):
 
 
 def process_pkt(pkt: bytes, in_if: str):
+    global start_time_ns
     if pkt[0] == 0x33 and pkt[1] == 0x33:
         # IPv6 multicast packet, drop it
-        # print(f'Dropping IPv6 multicast packet from {in_if}')
+        print(f'Dropping IPv6 multicast packet from {in_if}')
         return
+    elif start_time_ns == -1:
+        start_time_ns = time.time_ns()
     print(f'[{rel_time_str()}]Packet received from {in_if}:')
     print_pkt(pkt)
-    if in_if == 'veth-worker1':
-        process_worker1(pkt, in_if)
-    elif in_if == 'veth-worker2':
-        process_worker2(pkt, in_if)
-    else:
-        out_if = out_if_map[in_if]
-        sockets[out_if].send(pkt)
-        print(f'Forwarding packet from {in_if} to {out_if}')
+    # if in_if == 'veth-worker1':
+    #     process_worker1(pkt, in_if)
+    # elif in_if == 'veth-worker2':
+    #     process_worker2(pkt, in_if)
+    # else:
+    out_if = out_if_map[in_if]
+    sockets[out_if].send(pkt)
+    print(f'Forwarding packet from {in_if} to {out_if}')
 
 host1_acquire = bytes.fromhex('''
     08c0 ebdc a112 08c0 ebdc b300 0800 4500

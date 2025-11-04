@@ -16,7 +16,7 @@ $MASTER_FISSLOCK_PATH/experiments/run-on-all.sh $system_name $benchmark $think_t
 echo "Monitoring the experiment progress..."
 
 if [ "$system_name" = "netlock" ]; then
-    total=$((6 * (HOST_NUM - 1)))
+    total=$((1 * (HOST_NUM - 1)))
 elif [ "$system_name" = "fisslock" ]; then
     total=$((1 * HOST_NUM))
 else
@@ -32,7 +32,7 @@ do
     then
         break
     fi
-    # sleep 1
+    sleep 1
 done
 
 echo "Killing all the processes..."

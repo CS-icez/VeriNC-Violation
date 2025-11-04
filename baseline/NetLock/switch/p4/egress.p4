@@ -17,7 +17,7 @@ control SwitchEgress (
 
     action change_op_type_action() {
         hdr.nlk_hdr.recirc_flag = 0;
-        hdr.nlk_hdr.op = ACQUIRE_LOCK;
+        hdr.nlk_hdr.op = DIRECT_GRANT_FROM_SWITCH; // We fix this bug from NetLock.
         hdr.nlk_hdr.head = eg_md.timestamp_lo;
         hdr.nlk_hdr.tail = eg_md.timestamp_hi;
         hdr.nlk_hdr.tid = eg_md.tid;

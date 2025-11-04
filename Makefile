@@ -11,7 +11,7 @@ UTIL_DIR := ./utils
 INC_DIR := ./include
 
 # System specific dirs
-SYSTEM ?= fisslock
+SYSTEM ?= netlock
 ifeq ($(SYSTEM), netlock)
 	LIB_DIR := $(NETLOCK_DIR)/lib
 else ifeq ($(SYSTEM), srvlock)

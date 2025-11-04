@@ -102,7 +102,7 @@ class AcquireLockTest(BfRuntimeTest):
         #                           0x0a000207,
         #                           0x0a000208]
         # server_ip_address_list = [0x0a000207]
-        server_ip_address_list = [0xc0a80102]
+        server_ip_address_list = [0xc0a80104]
         # port_list = [24, # pro0_1
         #              16, # pro1_1
         #              8, # pro2_1
@@ -516,7 +516,7 @@ class AcquireLockTest(BfRuntimeTest):
         
 
         # tot_lk = int(testutils.test_param_get('lk'))
-        tot_lk = 10000
+        tot_lk = 100
         hmap = [0 for i in range(tot_lk + 1)]
         
         if (testutils.test_param_get('slot') != None):

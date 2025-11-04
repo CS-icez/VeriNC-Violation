@@ -24,11 +24,11 @@ server_binary=$FISSLOCK_PATH/build/server_netlock
 # For NetLock and SrvLock, we need to start the switch control plane
 # in advance via python scripts.
 netlock_map_obj=0
-[ "$system_name" == "netlock" ] && {
-  netlock_map_obj=1;
-  python3 $MASTER_FISSLOCK_PATH/experiments/netlock/console.py run_netlock_control $benchmark 10000
-  ssh $SWITCH "cd $BF_SDE_PATH; source set_sde.bash; ./install/bin/bfshell -f ./init_ports.bfsh"
-}
+# [ "$system_name" == "netlock" ] && {
+#   netlock_map_obj=1;
+#   python3 $MASTER_FISSLOCK_PATH/experiments/netlock/console.py run_netlock_control $benchmark 10000
+#   ssh $SWITCH "cd $BF_SDE_PATH; source set_sde.bash; ./install/bin/bfshell -f ./init_ports.bfsh"
+# }
 
 [ "$system_name" == "srvlock" ] && {
   python3 $MASTER_FISSLOCK_PATH/experiments/netlock/console.py run_central_srv_control "micro" 0
@@ -79,9 +79,11 @@ numa_1_cores=0@10,1@11,2@12
 # ssh pro1 "$run_client 6 b1:00.0 $numa_2_cores 1 $arguments" &
 # ssh pro2 "$run_client 7 b1:00.0 $numa_2_cores 1 $arguments" &
 ssh worker1 "$run_client 1 0000:e3:00.1 $numa_1_cores 1 $arguments" &
+ssh worker2 "$run_client 2 0000:e3:00.1 $numa_1_cores 1 $arguments" &
+ssh worker3 "$run_client 3 0000:e3:00.1 $numa_1_cores 1 $arguments" &
 
 if [ "$system_name" == "srvlock" ] || [ "$system_name" == "netlock" ]; then
-  ssh worker2 "$run_server 2 0000:e3:00.1 $numa_1_cores 1 $server_arguments" &
+  ssh worker4 "$run_server 4 0000:e3:00.1 $numa_1_cores 1 $server_arguments" &
 else
   ssh worker2 "$run_client 2 0000:e3:00.1 $numa_1_cores 1 $arguments" &
   # true
