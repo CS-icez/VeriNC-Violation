@@ -19,31 +19,11 @@ for if1, if2 in veth_pairs:
     out_if_map[if2] = if1
 
 sockets = {}  # if_name -> socket.socket
-send_queue = queue.PriorityQueue()  # (send_time, pkt, out_if, callback)
 
 start_time_ns = -1
 def rel_time_str():
     rel_time_us = (time.time_ns() - start_time_ns) // 1000 if start_time_ns != -1 else 0
     return f"{rel_time_us:09,}"
-
-def delay_send(pkt: bytes, out_if: str, delay_ns: int, callback=None):
-    send_time = time.time_ns() + delay_ns
-    send_queue.put((send_time, pkt, out_if, callback))
-
-
-def deamon():
-    while True:
-        send_time, pkt, out_if, callback = send_queue.get(block=True)
-        now = time.time_ns()
-        if send_time > now:
-            time.sleep((send_time - now) / 1e9)
-        try:
-            print(f'[{rel_time_str()}]Sending delayed packet to {out_if}, length {len(pkt)} bytes')
-            sockets[out_if].send(pkt)
-            if callback:
-                callback()
-        except Exception as e:
-            print(f"Error sending packet to {out_if}: {e}")
 
 
 def print_pkt(pkt: bytes):
@@ -76,8 +56,8 @@ def process_pkt(pkt: bytes, in_if: str):
         start_time_ns = time.time_ns()
     print(f'[{rel_time_str()}]Packet received from {in_if}, length {len(pkt)} bytes:')
     print_pkt(pkt)
-    if in_if == 'veth-worker1':
-        process_worker1(pkt, in_if)
+    if in_if == 'veth-tofino128':
+        process_tofino128(pkt, in_if)
     else:
         out_if = out_if_map[in_if]
         sockets[out_if].send(pkt)
@@ -85,18 +65,18 @@ def process_pkt(pkt: bytes, in_if: str):
 
 host1_state = 0 # before_release -> whatever
 
-def is_release_pkt(pkt: bytes) -> bool:
-    return len(pkt) == 76 and pkt[43] == 0x01
+def is_release_reply(pkt: bytes) -> bool:
+    return len(pkt) == 85 and pkt[43] == 0x06
 
-def process_worker1(pkt: bytes, in_if: str):
+def process_tofino128(pkt: bytes, in_if: str):
     global host1_state, start_time_ns
 
     out_if = out_if_map[in_if]
 
-    if is_release_pkt(pkt) and host1_state == 0:
+    if is_release_reply(pkt) and host1_state == 0:
         host1_state = 1
         print(f'[{rel_time_str()}]host1_state: 0 -> 1')
-        delay_send(pkt, out_if, 1_500_000_000, None)
+        print(f'Dropping release reply packet from {in_if}')
         return
 
     sockets[out_if].send(pkt)
@@ -115,9 +95,6 @@ if __name__ == "__main__":
         sockets[if1] = create_raw_socket(if1)
         sockets[if2] = create_raw_socket(if2)
         print(f'Created raw sockets for {if1} and {if2}')
-
-    threading.Thread(target=deamon, daemon=True).start()
-    print('Daemon thread started.')
 
     print('Starting main loop to process packets...')
     try:
