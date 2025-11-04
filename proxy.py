@@ -74,102 +74,33 @@ def process_pkt(pkt: bytes, in_if: str):
         return
     elif start_time_ns == -1:
         start_time_ns = time.time_ns()
-    print(f'[{rel_time_str()}]Packet received from {in_if}:')
+    print(f'[{rel_time_str()}]Packet received from {in_if}, length {len(pkt)} bytes:')
     print_pkt(pkt)
-    # if in_if == 'veth-worker1':
-    #     process_worker1(pkt, in_if)
-    # elif in_if == 'veth-worker2':
-    #     process_worker2(pkt, in_if)
-    # else:
-    out_if = out_if_map[in_if]
-    sockets[out_if].send(pkt)
-    print(f'Forwarding packet from {in_if} to {out_if}')
+    if in_if == 'veth-worker1':
+        process_worker1(pkt, in_if)
+    else:
+        out_if = out_if_map[in_if]
+        sockets[out_if].send(pkt)
+        print(f'Forwarding packet from {in_if} to {out_if}')
 
-host1_acquire = bytes.fromhex('''
-    08c0 ebdc a112 08c0 ebdc b300 0800 4500
-    002d 0000 0000 0011 0000 0002 000a 0102 
-    000a 4e00 4e21 0019 0000 0101 0005 3d8a
-    0101 0000 0001 0000 0000 00
-''')
-host1_release = bytes.fromhex('''
-    08c0 ebdc a112 08c0 ebdc b300 0800 4500
-    002d 0000 0000 0011 0000 0002 000a 0102
-    000a 4e00 4e21 0019 0000 0400 0005 3d8a
-    0101 0000 0001 0000 0000 00
-''')
-host2_acquire = bytes.fromhex('''
-    08c0 ebdc a112 08c0 ebdc b300 0800 4500
-    002d 0000 0000 0011 0000 0002 000a 0102              
-    000a 4e00 4e21 0019 0000 0101 0005 3d8a
-    0202 0000 0002 0000 0000 00
-''')
-lock_mask = bytes.fromhex('''
-    ffff ffff ffff ffff ffff ffff ffff ffff
-    ffff ffff ffff ffff ffff ffff ffff ffff
-    ffff ff00 ffff ffff ffff ffff ffff ffff
-    ffff ffff ffff ffff ffff ff
-''')
-host1_state = 0
-host2_state = 0 # acquiring -> whatever
+host1_state = 0 # before_release -> whatever
 
-def pkt_eq(pkt1: bytes, pkt2: bytes, mask: bytes) -> bool:
-    if not (len(pkt1) == len(pkt2) == len(mask)):
-        return False
-    return all((b1 & m) == (b2 & m) for b1, b2, m in zip(pkt1, pkt2, mask))
+def is_release_pkt(pkt: bytes) -> bool:
+    return len(pkt) == 76 and pkt[43] == 0x01
 
 def process_worker1(pkt: bytes, in_if: str):
     global host1_state, start_time_ns
 
     out_if = out_if_map[in_if]
 
-    def cb_acquire():
-        global host1_state
-        print(f'[{rel_time_str()}]host1_state: {host1_state} -> 3')
-        host1_state = 3
-        return
-
-    if pkt_eq(pkt, host1_acquire, lock_mask):
-        if host1_state != 0:
-            print(f'Dropping acquire packet from worker1: host1_state={host1_state}')
-            return
-        start_time_ns = time.time_ns()
+    if is_release_pkt(pkt) and host1_state == 0:
         host1_state = 1
         print(f'[{rel_time_str()}]host1_state: 0 -> 1')
-        delay_send(host1_acquire, out_if, 1_200_000_000, cb_acquire)
+        delay_send(pkt, out_if, 1_500_000_000, None)
         return
 
-    def cb_release():
-        global host1_state
-        print(f'[{rel_time_str()}]host1_state: {host1_state} -> 4')
-        host1_state = 4
-
-    if pkt_eq(pkt, host1_release, lock_mask):
-        if host1_state != 1:
-            print(f'Dropping release packet from worker1: host1_state={host1_state}')
-            return
-        print(f'[{rel_time_str()}]host1_state: 1 -> 2')
-        host1_state = 2
-        delay_send(pkt, out_if, 500_000_000, cb_release)
-        return
-
-    print('Dropping packet from worker1')
-    return
-
-def process_worker2(pkt: bytes, in_if: str):
-    global host2_state
-
-    out_if = out_if_map[in_if]
-
-    if pkt_eq(pkt, host2_acquire, lock_mask):
-        if host2_state != 0:
-            print(f'Dropping acquire packet from worker2: host2_state={host2_state}')
-            return
-        host2_state = 1
-        print(f'[{rel_time_str()}]host2_state: 0 -> 1')
-        sockets[out_if].send(pkt)
-        return
-
-    # print('Dropping packet from worker2')
+    sockets[out_if].send(pkt)
+    print(f'Forwarding packet from {in_if} to {out_if}')
     return
 
 

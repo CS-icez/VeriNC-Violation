@@ -44,6 +44,8 @@ topology:
       cmd: sleep infinity
       exec:
         - bash /home/bty/netlock/worker_exec.sh
+        - sleep 30
+        - bash -c "cd /home/bty/netlock/experiments && source set-env.sh && ./evaluation.sh netlock violation 0 1"
 
     worker2:
       kind: linux
