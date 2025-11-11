@@ -53,14 +53,16 @@ RUN apt install -y \
     libtool \
     pkg-config \
     cmake \
-    libssl-dev \
-    linux-headers-$(uname -r) \
-    linux-modules-$(uname -r)
+    libssl-dev
+    # linux-headers-$(uname -r) \
+    # linux-modules-$(uname -r)
 
 # Clone the switchml repo and compile the client library with the benchmarks and examples.
 ARG SWITCHML_UPDATED
-RUN git clone --recursive https://github.com/p4lang/p4app-switchML.git /home/switchml && \
-    cd /home/switchml/dev_root && \
+WORKDIR /home/switchml
+COPY . .
+# RUN git clone --recursive https://github.com/p4lang/p4app-switchML.git /home/switchml
+RUN cd /home/switchml/dev_root && \
     make DPDK=1 MLX5=${MLX5} MLX4=${MLX4} TIMEOUTS=${TIMEOUTS} VCL=${VCL} DEBUG=${DEBUG}
 
 # At this point the microbenchmark can be run with the dummy backend.

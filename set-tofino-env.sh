@@ -1,0 +1,2 @@
+export PYTHONPATH=$SDE_INSTALL/lib/python3.8/site-packages:$SDE/build/pkgsrc/bf-drivers/third-party/python_out:/root/onl-bf-sde/build/pkgsrc/bf-drivers/src/bf_rt/python_out:$SDE_INSTALL/lib/python3.5/site-packages
+export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python

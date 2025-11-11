@@ -1,0 +1,74 @@
+name: switchml
+
+topology:
+  nodes:
+    proxy:
+      kind: linux
+      image: dpdk:v21.11.4
+      mgmt-ipv4: 172.20.20.200
+      binds:
+        - ~/myrepo/verinc-switchml:/root/switchml
+      cmd: sleep infinity
+      exec:
+        - bash -c "nohup python3 -u /root/switchml/proxy.py &> /root/switchml/log/proxy.log &"
+
+    tofino:
+      kind: linux
+      image: switchml-tofino:latest
+      mgmt-ipv4: 172.20.20.100
+      binds:
+        - /dev/hugepages:/mnt/huge
+        - ~/myrepo/verinc-switchml:/root/bty/switchml
+      cmd: |
+          bash -ic "
+          mkdir -p /tmp # /run/sshd
+          # service ssh start
+          sed -i 's/is not 0/!= 0/g' $SDE_INSTALL/lib/python3.5/site-packages/tofino/bfrt_grpc/client.py
+          cd /root/bty/switchml
+          cat set-tofino-env.sh >> /root/.bashrc
+          source /root/.bashrc
+          cp sitecustomize_.py $SDE_INSTALL/lib/python3.8/site-packages/sitecustomize.py
+          cp dev_root/p4-build/SwitchML.conf $SDE_INSTALL/share/p4/targets/tofino
+          rm model*.log bf_drivers.log*
+          rm $SDE_INSTALL/lib/libpltfm_mgr.so
+          $SDE/run_tofino_model.sh -f ports.json -p SwitchML &> log/tofino_model.log &
+          sleep 3
+          $SDE/run_switchd.sh -p SwitchML &> log/switchd.log &
+          sleep 15
+          cd dev_root/controller
+          python3.8 switchml.py --bfrt-ip 172.20.20.100 --switch-ip 10.0.0.100 &> ../../log/controller.log
+          "
+      exec:
+        - sleep 20
+
+    worker1:
+      kind: linux
+      image: switchml-client:v2
+      mgmt-ipv4: 172.20.20.11
+      binds:
+        - /dev/hugepages:/mnt/huge
+        - ~/myrepo/verinc-switchml:/home/bty/switchml
+      cmd: bash -i -c "cat /home/bty/switchml/set-client-env.sh >> /root/.bashrc && sleep infinity"
+      exec:
+        - hostname worker1
+      #   - bash /home/bty/switchml/worker_exec.sh
+        # - sleep 30
+        # - bash -c "cd /home/bty/switchml/experiments && source set-env.sh && ./evaluation.sh switchml violation 0 1"
+
+    worker2:
+      kind: linux
+      image: switchml-client:v2
+      mgmt-ipv4: 172.20.20.12
+      binds:
+        - /dev/hugepages:/mnt/huge
+        - ~/myrepo/verinc-switchml:/home/bty/switchml
+      cmd: bash -i -c "cat /home/bty/switchml/set-client-env.sh >> /root/.bashrc && sleep infinity"
+      exec:
+        - hostname worker2
+      #   - bash /home/bty/switchml/worker_exec.sh
+
+  links:
+    - endpoints: ["worker1:veth", "proxy:veth-worker1"]
+    - endpoints: ["worker2:veth", "proxy:veth-worker2"]
+    - endpoints: ["tofino:veth128", "proxy:veth-tofino128"]
+    - endpoints: ["tofino:veth144", "proxy:veth-tofino144"]

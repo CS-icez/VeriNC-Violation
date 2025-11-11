@@ -1,0 +1,24 @@
+{
+    "PortToIf": [
+        {
+            "device_port": 128,
+            "if": "veth128"
+        },
+        {
+            "device_port": 144,
+            "if": "veth144"
+        },
+        {
+            "device_port": 160,
+            "if": "veth160"
+        },
+        {
+            "device_port": 176,
+            "if": "veth176"
+        },
+        {
+            "device_port": 188,
+            "if": "veth188"
+        }
+    ]
+}

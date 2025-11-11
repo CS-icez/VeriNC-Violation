@@ -4,3 +4,12 @@ docs/client_lib_api
 docs/readmes
 __pycache__
 dev_root/controller/switchml_pb2*
+
+p4-build/
+log/
+zlog-cfg-cur
+*.log
+.vscode/
+clab-switchml/
+dev_root/client_lib/src/*.pb.*
+pcap_output/

@@ -274,8 +274,8 @@ void InitPort(DpdkBackendConfig config, uint16_t num_worker_threads) {
 
     struct rte_flow_error error;
 
-    LOG_IF(ERROR, rte_flow_isolate(port_id, 1, &error) < 0)
-        << "Flow isolated mode failed: " << error.type << " " << (error.message ? error.message : "(no stated reason)");
+    // LOG_IF(ERROR, rte_flow_isolate(port_id, 1, &error) < 0)
+    //     << "Flow isolated mode failed: " << error.type << " " << (error.message ? error.message : "(no stated reason)");
 
     ret = rte_eth_dev_configure(port_id, num_queues, num_queues, &port_conf);
     LOG_IF(FATAL, ret < 0) << "Cannot configure port: " << rte_strerror(ret);
@@ -345,9 +345,9 @@ void InitPort(DpdkBackendConfig config, uint16_t num_worker_threads) {
     CheckPortLinkStatus(port_id);
 
     // Add FDIR filters
-    for (uint16_t i = 0; i < num_queues; i++){
-        InsertFlowRule(port_id, i, config.worker_port+i);
-    }
+    // for (uint16_t i = 0; i < num_queues; i++){
+    //     InsertFlowRule(port_id, i, config.worker_port+i);
+    // }
 }
 
 } // namespace switchml

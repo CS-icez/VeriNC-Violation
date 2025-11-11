@@ -62,6 +62,28 @@ ifeq ($(MLX4),1)
 endif
 endif
 	$(MAKE) -C dpdk defconfig T=x86_64-native-linuxapp-gcc
+	# 修改生成的 build/.config（真正起作用的配置）
+	# 启用纯用户态 vdev
+	sed -ri 's/^(CONFIG_RTE_LIBRTE_PMD_AF_PACKET=)n/\1y/' dpdk/build/.config || true
+	sed -ri 's/^(CONFIG_RTE_LIBRTE_PMD_TAP=)n/\1y/'       dpdk/build/.config || true
+
+	# 禁用会触发内核构建的开关
+	sed -ri 's/^(CONFIG_RTE_KNI_KMOD=)y/\1n/'            dpdk/build/.config || true
+	sed -ri 's/^(CONFIG_RTE_EAL_IGB_UIO=)y/\1n/'         dpdk/build/.config || true
+	sed -ri 's/^(CONFIG_RTE_LIBRTE_KNI=)y/\1n/'          dpdk/build/.config || true
+
+	# 关闭易引入内核/专用硬件依赖的 raw/accel PMD
+	sed -ri 's/^(CONFIG_RTE_LIBRTE_PMD_NTB_RAWDEV=)y/\1n/'               dpdk/build/.config || true
+	sed -ri 's/^(CONFIG_RTE_LIBRTE_PMD_IOAT_RAWDEV=)y/\1n/'              dpdk/build/.config || true
+	sed -ri 's/^(CONFIG_RTE_LIBRTE_PMD_OCTEONTX2_DMA_RAWDEV=)y/\1n/'     dpdk/build/.config || true
+	sed -ri 's/^(CONFIG_RTE_LIBRTE_PMD_QAT=)y/\1n/'                      dpdk/build/.config || true
+	sed -ri 's/^(CONFIG_RTE_LIBRTE_PMD_VIRTIO_CRYPTO=)y/\1n/'            dpdk/build/.config || true
+	sed -ri 's/^(CONFIG_RTE_LIBRTE_PMD_OCTEONTX_CRYPTO=)y/\1n/'          dpdk/build/.config || true
+	sed -ri 's/^(CONFIG_RTE_LIBRTE_PMD_OCTEONTX2_CRYPTO=)y/\1n/'         dpdk/build/.config || true
+	sed -ri 's/^(CONFIG_RTE_LIBRTE_PMD_NITROX=)y/\1n/'                   dpdk/build/.config || true
+	sed -ri 's/^(CONFIG_RTE_LIBRTE_PMD_OCTEONTX_ZIPVF=)y/\1n/'           dpdk/build/.config || true
+
+	@grep -E 'AF_PACKET|TAP|IGB_UIO|KNI' dpdk/build/.config || true
 	$(MAKE) -C dpdk EXTRA_CFLAGS="-fPIC $(CXXFLAGS)" -j
 
 .PHONY: vcl
@@ -73,7 +95,7 @@ grpc:
 	mkdir -p grpc/cmake/build
 	cd grpc/cmake/build && \
 	$(CMAKE) -DCMAKE_INSTALL_PREFIX=$(DEVROOT)/third_party/grpc/build -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DgRPC_INSTALL=ON -DgRPC_BUILD_TESTS=OFF -DgRPC_SSL_PROVIDER=package ../.. && \
-	make -j && \
+	make -j8 && \
 	make install
 	@echo ***IMPORTANT***
 	@echo Make sure that you register the grpc/protobuf libraries in the system before you try to run any program that runs switchml rdma.

@@ -259,7 +259,13 @@ void DpdkWorkerThread::operator()() {
         uint16_t nb_tx;
         uint16_t num_sent_pkts = 0;
         do {
+            printf("%s: %d\n", __FUNCTION__, __LINE__);
+            printf("dpdkconf.port_id: %d\n", dpdkconf.port_id);
+            printf("this->tid_ : %d\n", this->tid_);
+            printf("batch_num_pkts: %d\n", batch_num_pkts);
+            printf("num_sent_pkts: %d\n", num_sent_pkts);
             nb_tx = rte_eth_tx_burst(dpdkconf.port_id, this->tid_, &pkts_tx_burst[num_sent_pkts], batch_num_pkts - num_sent_pkts);
+            printf("%s: %d\n", __FUNCTION__, __LINE__);
             num_sent_pkts += nb_tx;
             DVLOG(3) << "Worker thread '" << this->tid_ << "' First batch sent " << nb_tx << "/" << batch_num_pkts << ".";
         } while (num_sent_pkts < batch_num_pkts);
