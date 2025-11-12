@@ -33,7 +33,8 @@ control IngressDropSimulator(
         // Use saturating addition so that the result never wraps around.
         // A result of 0xffff means to drop the packet.
         // This will be consumed later in the pipeline when checking bitmaps.
-        if (port_metadata.ingress_drop_probability != 0) {
+        // if (port_metadata.ingress_drop_probability != 0) {
+        if (false) {
             port_metadata.ingress_drop_probability = rng.get() |+| port_metadata.ingress_drop_probability;
         }
     }
@@ -55,7 +56,8 @@ control EgressDropSimulator(
         // Do so by adding random value to drop probability.
         // Use saturating addition so that the result never wraps around.
         // A result of 0xffff means to drop the packet.
-        if (port_metadata.egress_drop_probability != 0) {
+        // if (port_metadata.egress_drop_probability != 0) {
+        if (false) {
             port_metadata.egress_drop_probability = rng.get() |+| port_metadata.egress_drop_probability;
         }
 

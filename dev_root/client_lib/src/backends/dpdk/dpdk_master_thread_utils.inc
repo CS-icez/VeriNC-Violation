@@ -220,15 +220,15 @@ void InitPort(DpdkBackendConfig config, uint16_t num_worker_threads) {
     rxm.split_hdr_size = 0;
     //rxm.ignore_offload_bitfield = 1;
 
-    if (dev_info.rx_offload_capa & DEV_RX_OFFLOAD_IPV4_CKSUM) {
-        rxm.offloads |= DEV_RX_OFFLOAD_IPV4_CKSUM;
-        VLOG(1) << "RX IPv4 checksum offload enabled";
-    }
+    // if (dev_info.rx_offload_capa & DEV_RX_OFFLOAD_IPV4_CKSUM) {
+    //     rxm.offloads |= DEV_RX_OFFLOAD_IPV4_CKSUM;
+    //     VLOG(1) << "RX IPv4 checksum offload enabled";
+    // }
 
-    if (dev_info.rx_offload_capa & DEV_RX_OFFLOAD_UDP_CKSUM) {
-        rxm.offloads |= DEV_RX_OFFLOAD_UDP_CKSUM;
-        VLOG(1) << "RX UDP checksum offload enabled";
-    }
+    // if (dev_info.rx_offload_capa & DEV_RX_OFFLOAD_UDP_CKSUM) {
+    //     rxm.offloads |= DEV_RX_OFFLOAD_UDP_CKSUM;
+    //     VLOG(1) << "RX UDP checksum offload enabled";
+    // }
 
     /* Default in DPDK 18.11
     if (dev_info.rx_offload_capa & DEV_RX_OFFLOAD_CRC_STRIP) {
@@ -237,37 +237,37 @@ void InitPort(DpdkBackendConfig config, uint16_t num_worker_threads) {
     }*/
 
     // TX Configuration
-    txm.mq_mode = ETH_MQ_TX_NONE;
+    // txm.mq_mode = ETH_MQ_TX_NONE;
 
-    if (dev_info.tx_offload_capa & DEV_TX_OFFLOAD_IPV4_CKSUM) {
-        txm.offloads |= DEV_TX_OFFLOAD_IPV4_CKSUM;
-        VLOG(1) << "TX IPv4 checksum offload enabled";
-    }
+    // if (dev_info.tx_offload_capa & DEV_TX_OFFLOAD_IPV4_CKSUM) {
+    //     txm.offloads |= DEV_TX_OFFLOAD_IPV4_CKSUM;
+    //     VLOG(1) << "TX IPv4 checksum offload enabled";
+    // }
 
-    if (dev_info.tx_offload_capa & DEV_TX_OFFLOAD_UDP_CKSUM) {
-        txm.offloads |= DEV_TX_OFFLOAD_UDP_CKSUM;
-        VLOG(1) << "TX UDP checksum offload enabled";
-    }
+    // if (dev_info.tx_offload_capa & DEV_TX_OFFLOAD_UDP_CKSUM) {
+    //     txm.offloads |= DEV_TX_OFFLOAD_UDP_CKSUM;
+    //     VLOG(1) << "TX UDP checksum offload enabled";
+    // }
 
-    if (dev_info.tx_offload_capa & DEV_TX_OFFLOAD_MBUF_FAST_FREE) {
-        txm.offloads |= DEV_TX_OFFLOAD_MBUF_FAST_FREE;
-        VLOG(1) << "Fast release of mbufs enabled";
-    }
+    // if (dev_info.tx_offload_capa & DEV_TX_OFFLOAD_MBUF_FAST_FREE) {
+    //     txm.offloads |= DEV_TX_OFFLOAD_MBUF_FAST_FREE;
+    //     VLOG(1) << "Fast release of mbufs enabled";
+    // }
 
-    port_conf.rxmode = rxm;
-    port_conf.txmode = txm;
+    // port_conf.rxmode = rxm;
+    // port_conf.txmode = txm;
     //port_conf.link_speeds = ETH_LINK_SPEED_AUTONEG;
     //port_conf.lpbk_mode = 0; // Loopback operation mode disabled
     //port_conf.dcb_capability_en = 0; // DCB disabled
 
     // Flow director
-    port_conf.rx_adv_conf.rss_conf.rss_key = NULL;
-    port_conf.rx_adv_conf.rss_conf.rss_hf = 0;
+    // port_conf.rx_adv_conf.rss_conf.rss_key = NULL;
+    // port_conf.rx_adv_conf.rss_conf.rss_hf = 0;
 
-    port_conf.fdir_conf.mode = RTE_FDIR_MODE_PERFECT;
-    port_conf.fdir_conf.pballoc = RTE_FDIR_PBALLOC_64K;
-    port_conf.fdir_conf.status = RTE_FDIR_NO_REPORT_STATUS;
-    port_conf.fdir_conf.drop_queue = 127;
+    // port_conf.fdir_conf.mode = RTE_FDIR_MODE_PERFECT;
+    // port_conf.fdir_conf.pballoc = RTE_FDIR_PBALLOC_64K;
+    // port_conf.fdir_conf.status = RTE_FDIR_NO_REPORT_STATUS;
+    // port_conf.fdir_conf.drop_queue = 127;
 
     //memset(&port_conf.fdir_conf.mask, 0x00, sizeof(struct rte_eth_fdir_masks));
     //port_conf.fdir_conf.mask.dst_port_mask = 0xFFFF;

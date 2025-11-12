@@ -62,7 +62,7 @@ ifeq ($(MLX4),1)
 endif
 endif
 	$(MAKE) -C dpdk defconfig T=x86_64-native-linuxapp-gcc
-	# 修改生成的 build/.config（真正起作用的配置）
+	# 修改生成的 build/.config
 	# 启用纯用户态 vdev
 	sed -ri 's/^(CONFIG_RTE_LIBRTE_PMD_AF_PACKET=)n/\1y/' dpdk/build/.config || true
 	sed -ri 's/^(CONFIG_RTE_LIBRTE_PMD_TAP=)n/\1y/'       dpdk/build/.config || true

@@ -130,11 +130,13 @@ class UDPReceiver(Control):
                     self.gc.KeyTuple('hdr.ethernet.src_addr', worker_mac,
                                      worker_mac_mask),
                     self.gc.KeyTuple('hdr.ethernet.dst_addr', self.switch_mac,
-                                     'FF:FF:FF:FF:FF:FF'),
+                                    #  'FF:FF:FF:FF:FF:FF'),
+                                     '00:00:00:00:00:00'), #! For violation trace only.
                     self.gc.KeyTuple('hdr.ipv4.src_addr', worker_ip,
                                      worker_ip_mask),
                     self.gc.KeyTuple('hdr.ipv4.dst_addr', self.switch_ip,
-                                     '255.255.255.255'),
+                                    #  '255.255.255.255'),
+                                     '0.0.0.0'), #! For violation trace only.
                     self.gc.KeyTuple('hdr.udp.dst_port', udp_port, udp_mask),
                     # Ignore parser errors
                     self.gc.KeyTuple('ig_prsr_md.parser_err', 0x0000, 0x0000)

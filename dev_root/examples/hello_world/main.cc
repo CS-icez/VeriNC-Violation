@@ -31,12 +31,12 @@ int main(){
     printf("Hello world!. Starting the switchml context\n");
     ctx.Start();
 
-    uint64_t numel = (1 << 15);
-    int num_tensors = 8;
+    uint64_t numel = 128;
+    int num_tensors = 1;
     int num_workers = ctx.GetConfig().general_.num_workers;
     printf("Allocating data\n");
-    float in_data[num_tensors][numel];
-    float out_data[num_tensors][numel];
+    int in_data[num_tensors][numel];
+    int out_data[num_tensors][numel];
     // Init data
     printf("Initializing data\n");
     for(int i = 0; i < num_tensors; i++) {
@@ -47,7 +47,7 @@ int main(){
 
     printf("Submitting all reduce jobs\n");
     for(int i = 0; i < num_tensors; i++) {
-        ctx.AllReduceAsync(in_data[i], out_data[i], numel, switchml::FLOAT32, switchml::AllReduceOperation::SUM);
+        ctx.AllReduceAsync(in_data[i], out_data[i], numel, switchml::INT32, switchml::AllReduceOperation::SUM);
     }
 
     printf("Waiting for all jobs to finish\n");
@@ -59,15 +59,17 @@ int main(){
     printf("Verifying results\n");
     for(int i = 0; i < num_tensors; i++) {
         for(uint64_t j = 0; j < numel; j++) {
-            float input = i*numel+j; // Use the same formula you used when you initialized
-            float expected = input * num_workers;
-            float error = (expected-out_data[i][j]) / (expected + std::numeric_limits<float>::epsilon()) * 100; // We add epsilon to avoid running into division by 0
-            if( error > 1) {
-                printf("Failed to verify output data. Element %ld in tensor %d was %e but we expected %e (error %.2f%%)\n", j, i, out_data[i][j], expected, error);
+            int input = i*numel+j; // Use the same formula you used when you initialized
+            int expected = input * num_workers;
+            // float error = (expected-out_data[i][j]) / (expected + std::numeric_limits<float>::epsilon()) * 100; // We add epsilon to avoid running into division by 0
+            int error = abs(out_data[i][j] - expected);
+            // if( error > 1) {
+            if(error != 0) {
+                printf("Failed to verify output data. Element %ld in tensor %d was %d but we expected %d\n", j, i, out_data[i][j], expected);
                 exit(1);
             }
             if(in_data[i][j] != input){
-                printf("Failed to verify that input data is unchanged. Element %ld in tensor %d was %e but we expected %e\n", j, i, in_data[i][j], input);
+                printf("Failed to verify that input data is unchanged. Element %ld in tensor %d was %d but we expected %d\n", j, i, in_data[i][j], input);
                 exit(1);
             }
         }

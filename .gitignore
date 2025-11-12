@@ -1,10 +1,14 @@
-build
+# build
 docs/_build
 docs/client_lib_api
 docs/readmes
 __pycache__
 dev_root/controller/switchml_pb2*
 
+dev_root/build/*
+!dev_root/build/bin
+dev_root/build/bin/*
+!dev_root/build/bin/*.cfg
 p4-build/
 log/
 zlog-cfg-cur

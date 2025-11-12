@@ -73,7 +73,7 @@ void DpdkMasterThread::operator()() {
     char* eal_args[eal_args_c];
     for (int i = 0; i < eal_args_c; i++)
     {
-        eal_args[i] = new char[eal_cmdline_tokens[i].size()];
+        eal_args[i] = new char[eal_cmdline_tokens[i].size() + 1];
         strcpy(eal_args[i], eal_cmdline_tokens[i].c_str());
     }
     
