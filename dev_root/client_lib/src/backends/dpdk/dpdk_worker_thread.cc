@@ -274,9 +274,6 @@ void DpdkWorkerThread::operator()() {
         while (likely(num_received_pkts < total_num_pkts && ctx.GetContextState() == Context::ContextState::RUNNING)) {
             // Read packet(s) from RX ring
             nb_rx = rte_eth_rx_burst(dpdkconf.port_id, this->tid_, pkts_rx_burst, dpdkconf.burst_rx);
-            if (nb_rx >  0) {
-                printf("nb_rx=%d\n", nb_rx);
-            }
 
             // Check if we should flush the tx buffer or retransmit anything.
             // We only do that if we haven't received any packets in this iteration
@@ -390,7 +387,6 @@ void DpdkWorkerThread::operator()() {
             DVLOG(3) << "Worker thread '" << this->tid_ << "' received " << nb_rx << " packets. " << num_received_pkts << "/" << total_num_pkts << ".";
 
         } // while (num_received_pkts < total_num_pkts && ctx.GetContextState() == Context::ContextState::RUNNING)
-            printf("%s: %d\n", __FUNCTION__, __LINE__);
 
         // Update switch shift for next job
         switch_pool_index_shift = (switch_pool_index_shift + total_num_pkts) % (2 * max_outstanding_pkts);

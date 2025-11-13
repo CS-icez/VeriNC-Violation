@@ -7,18 +7,6 @@
         {
             "device_port": 4,
             "if": "veth4"
-        },
-        {
-            "device_port": 160,
-            "if": "veth160"
-        },
-        {
-            "device_port": 176,
-            "if": "veth176"
-        },
-        {
-            "device_port": 188,
-            "if": "veth188"
         }
     ]
 }

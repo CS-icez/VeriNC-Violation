@@ -606,11 +606,6 @@ class SwitchML(object):
 
         self.log.info('Stopping controller')
 
-    def configure_for_violation_trace(self):
-        # TODO: mgid, src ip, src mac
-        self.udp_receiver.add_udp_worker(0, None, 0xA000001, 0xBEE0, 0xFFFF, 2, 0)
-        self.udp_receiver.add_udp_worker(1, None, 0xA000002, 0xBEE0, 0xFFFF, 2, 0)
-
 
 if __name__ == '__main__':
 
@@ -682,7 +677,6 @@ if __name__ == '__main__':
     ctrl = SwitchML()
     ctrl.setup(args.program, args.switch_mac, args.switch_ip, args.bfrt_ip,
                args.bfrt_port, args.ports, args.enable_folded_pipe)
-    ctrl.configure_for_violation_trace()
 
 
     # Start controller
