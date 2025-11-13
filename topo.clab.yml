@@ -74,3 +74,4 @@ topology:
     - endpoints: ["worker2:veth", "proxy:veth-worker2"]
     - endpoints: ["tofino:veth0", "proxy:veth-tofino0"]
     - endpoints: ["tofino:veth4", "proxy:veth-tofino4"]
+    - endpoints: ["tofino:veth68", "proxy:veth-tofino68"]

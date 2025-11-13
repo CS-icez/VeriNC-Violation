@@ -8,6 +8,7 @@ import threading
 veth_pairs = [
     ('veth-worker1', 'veth-tofino0'),
     ('veth-worker2', 'veth-tofino4'),
+    ('veth-tofino68', 'veth-tofino68'),
 ]
 
 out_if_map = {}
