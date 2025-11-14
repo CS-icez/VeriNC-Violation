@@ -31,7 +31,7 @@ int main(){
     printf("Hello world!. Starting the switchml context\n");
     ctx.Start();
 
-    uint64_t numel = 128;
+    uint64_t numel = 64 * 3;
     int num_tensors = 1;
     int num_workers = ctx.GetConfig().general_.num_workers;
     printf("Allocating data\n");

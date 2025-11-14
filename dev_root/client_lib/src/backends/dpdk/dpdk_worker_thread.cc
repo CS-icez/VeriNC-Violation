@@ -216,6 +216,11 @@ void DpdkWorkerThread::operator()() {
         this->timer_cycles_ = initial_timer_cycles; // cycles for 1 ms
 #endif
 
+        int rank = ctx.GetConfig().general_.rank;
+        if (rank == 1) {
+            usleep(500 * 1000);
+        }
+
         // Create first batch of packets
         DVLOG(3) << "Worker thread '" << this->tid_ << "' creating first batch";
         uint64_t pkt_id = 0;
@@ -233,7 +238,6 @@ void DpdkWorkerThread::operator()() {
 
             BuildPacket(mbuf, job_slice.job->id_, pkt_id, switch_pool_index, genconf.packet_numel,
                         bk.GetSwitchE2eAddr(), this->worker_thread_e2e_addr_be_, this->ppp_);
-            pkt_id++;
 
 #ifdef TIMEOUTS
             // The outstanding_pkt_index is just a way to associate each outstanding packet with a particular timer slot.
@@ -252,6 +256,7 @@ void DpdkWorkerThread::operator()() {
             rte_timer_reset_sync(&timers[outstanding_pkt_index], this->timer_cycles_ * max_outstanding_pkts, PERIODICAL, this->lcore_id_,
                 ResendPacketCallback, &resend_pkt_cb_args[outstanding_pkt_index]);
 #endif
+            pkt_id++; // Must record resend structure before incrementing.
         }
 
         // Send first batch

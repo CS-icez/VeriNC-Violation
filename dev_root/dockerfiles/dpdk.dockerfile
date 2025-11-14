@@ -31,7 +31,8 @@ RUN apt-get update && \
     sudo \
     gpg \ 
     lsb-release \
-    software-properties-common
+    software-properties-common \
+    iproute2
 
 # Add kitware's APT repository for cmake
 RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | \

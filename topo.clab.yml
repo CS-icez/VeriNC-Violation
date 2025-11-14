@@ -52,9 +52,8 @@ topology:
       exec:
         - hostname worker1
         - ip link set dev veth address 00:11:22:33:44:55 # Containerlab: docker run -> veth pairs -> docker exec.
-      #   - bash /home/bty/switchml/worker_exec.sh
-        # - sleep 30
-        # - bash -c "cd /home/bty/switchml/experiments && source set-env.sh && ./evaluation.sh switchml violation 0 1"
+        - sleep 35
+        - bash -ic "cd $PROJ_DIR/dev_root/build/bin && ./hello_world &> $PROJ_DIR/log/violation_worker1.log"
 
     worker2:
       kind: linux
@@ -67,7 +66,8 @@ topology:
       exec:
         - hostname worker2
         - ip link set dev veth address 00:11:22:33:44:66
-      #   - bash /home/bty/switchml/worker_exec.sh
+        - sleep 35
+        - bash -ic 'cd $PROJ_DIR/dev_root/build/bin && ./hello_world &> $PROJ_DIR/log/violation_worker2.log'
 
   links:
     - endpoints: ["worker1:veth", "proxy:veth-worker1"]
