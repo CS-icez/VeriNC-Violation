@@ -44,7 +44,7 @@ topology:
 
     client0: # Main client dl11.
       kind: linux
-      image: farreach-client-server:v1
+      image: farreach-client-server:dev
       mgmt-ipv4: 172.20.20.11
       binds:
         - /dev/hugepages:/mnt/huge
@@ -60,7 +60,7 @@ topology:
 
     client1: # Secondary client dl20.
       kind: linux
-      image: farreach-client-server:v1
+      image: farreach-client-server:dev
       mgmt-ipv4: 172.20.20.12
       binds:
         - /dev/hugepages:/mnt/huge
@@ -76,7 +76,7 @@ topology:
 
     server0: # Server 0 dl21.
       kind: linux
-      image: farreach-client-server:v1
+      image: farreach-client-server:dev
       mgmt-ipv4: 172.20.20.13
       binds:
         - /dev/hugepages:/mnt/huge
@@ -92,7 +92,7 @@ topology:
 
     server1: # Server 1 dl30.
       kind: linux
-      image: farreach-client-server:v1
+      image: farreach-client-server:dev
       mgmt-ipv4: 172.20.20.14
       binds:
         - /dev/hugepages:/mnt/huge
