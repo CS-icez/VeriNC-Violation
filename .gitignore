@@ -16,3 +16,6 @@ ycsb.iml
 .scriptsdist
 *.log*
 benchmarkdist/.ycsb
+
+README_CN.md
+clab-farreach/

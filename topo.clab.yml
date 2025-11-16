@@ -1,0 +1,119 @@
+name: farreach
+
+topology:
+  nodes:
+    proxy:
+      kind: linux
+      image: dpdk:v21.11.4
+      mgmt-ipv4: 172.20.20.200
+      binds:
+        - ~/myrepo/verinc-farreach:/root/farreach
+      cmd: sleep infinity
+      exec:
+        - bash -c "nohup python3 -u /root/farreach/proxy.py &> /root/farreach/log/proxy.log &"
+
+    tofino: # Leaf switch bf3.
+      kind: linux
+      image: farreach-tofino:latest
+      mgmt-ipv4: 172.20.20.100
+      binds:
+        - /dev/hugepages:/mnt/huge
+        - ~/myrepo/verinc-farreach:/root/farreach
+      env:
+        PROJ_DIR: /root/farreach
+      cmd: |
+          bash -ic "
+          cd /root/farreach
+          cat set-tofino-env.sh >> /root/.bashrc
+          source /root/.bashrc
+          # cp dev_root/p4-build/farreach.conf $SDE_INSTALL/share/p4/targets/tofino
+          rm model*.log bf_drivers.log*
+          rm $SDE_INSTALL/lib/libpltfm_mgr.so
+          # $SDE/run_tofino_model.sh -f ports.json -p farreach &> log/tofino_model.log &
+          # sleep 3
+          # $SDE/run_switchd.sh -p farreach &> log/switchd.log &
+          # sleep 18
+          # cd dev_root/controller
+          # python3.8 farreach.py --bfrt-ip 172.20.20.100 --switch-ip 10.0.0.100 --log-level DEBUG &> ../../log/controller.log
+          sleep infinity
+          "
+      exec:
+        - hostname bf3
+        - bash -c "$PROJ_DIR/config_ssh.sh"
+        # - sleep 33
+
+    client0: # Main client dl11.
+      kind: linux
+      image: farreach-client-server:v1
+      mgmt-ipv4: 172.20.20.11
+      binds:
+        - /dev/hugepages:/mnt/huge
+        - ~/myrepo/verinc-farreach:/root/farreach
+      env:
+        PROJ_DIR: /root/farreach
+      cmd: bash -i -c "cat /root/farreach/set-client-env.sh >> /root/.bashrc && sleep infinity"
+      exec:
+        - hostname dl11
+        - ip link set dev veth address 3c:fd:fe:bb:ca:78 # Containerlab: docker run -> veth pairs -> docker exec.
+        - ip addr add 10.0.1.11/24 dev veth
+        - bash -c "$PROJ_DIR/config_ssh.sh"
+
+    client1: # Secondary client dl20.
+      kind: linux
+      image: farreach-client-server:v1
+      mgmt-ipv4: 172.20.20.12
+      binds:
+        - /dev/hugepages:/mnt/huge
+        - ~/myrepo/verinc-farreach:/root/farreach
+      env:
+        PROJ_DIR: /root/farreach
+      cmd: bash -i -c "cat /root/farreach/set-client-env.sh >> /root/.bashrc && sleep infinity"
+      exec:
+        - hostname dl20
+        - ip link set dev veth address 9c:69:b4:60:34:f4
+        - ip addr add 10.0.1.12/24 dev veth
+        - bash -c "$PROJ_DIR/config_ssh.sh"
+
+    server0: # Server 0 dl21.
+      kind: linux
+      image: farreach-client-server:v1
+      mgmt-ipv4: 172.20.20.13
+      binds:
+        - /dev/hugepages:/mnt/huge
+        - ~/myrepo/verinc-farreach:/root/farreach
+      env:
+        PROJ_DIR: /root/farreach
+      cmd: bash -i -c "cat /root/farreach/set-server-env.sh >> /root/.bashrc && sleep infinity"
+      exec:
+        - hostname dl21
+        - ip link set dev veth address 9c:69:b4:60:34:e1
+        - ip addr add 10.0.1.13/24 dev veth
+        - bash -c "$PROJ_DIR/config_ssh.sh"
+
+    server1: # Server 1 dl30.
+      kind: linux
+      image: farreach-client-server:v1
+      mgmt-ipv4: 172.20.20.14
+      binds:
+        - /dev/hugepages:/mnt/huge
+        - ~/myrepo/verinc-farreach:/root/farreach
+      env:
+        PROJ_DIR: /root/farreach
+      cmd: bash -i -c "cat /root/farreach/set-server-env.sh >> /root/.bashrc && sleep infinity"
+      exec:
+        - hostname dl30
+        - ip link set dev veth address 9c:69:b4:60:ef:c1
+        - ip addr add 10.0.1.14/24 dev veth
+        - bash -c "$PROJ_DIR/config_ssh.sh"
+
+  links:
+    - endpoints: ["client0:veth", "proxy:veth-client0"]
+    - endpoints: ["client1:veth", "proxy:veth-client1"]
+    - endpoints: ["server0:veth", "proxy:veth-server0"]
+    - endpoints: ["server1:veth", "proxy:veth-server1"]
+    - endpoints: ["tofino:veth0", "proxy:veth-tofino0"]
+    - endpoints: ["tofino:veth4", "proxy:veth-tofino4"]
+    - endpoints: ["tofino:veth8", "proxy:veth-tofino8"]
+    - endpoints: ["tofino:veth12", "proxy:veth-tofino12"]
+    - endpoints: ["tofino:veth16", "proxy:veth-tofino16"]
+    - endpoints: ["tofino:veth144", "proxy:veth-tofino144"]

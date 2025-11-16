@@ -1,0 +1,32 @@
+Host *
+    StrictHostKeyChecking no
+
+Host dl11
+	HostName 172.20.20.11
+	User root
+	Port 22
+	IdentityFile ~/.ssh/id_ed25519
+
+Host dl20
+    HostName 172.20.20.12
+    User root
+    Port 22
+    IdentityFile ~/.ssh/id_ed25519
+
+Host dl21
+    HostName 172.20.20.13
+    User root
+    Port 22
+    IdentityFile ~/.ssh/id_ed25519
+
+Host dl30
+    HostName 172.20.20.14
+    User root
+    Port 22
+    IdentityFile ~/.ssh/id_ed25519
+
+Host bf3
+    HostName 172.20.20.100
+    User root
+    Port 22
+    IdentityFile ~/.ssh/id_ed25519
