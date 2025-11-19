@@ -51,8 +51,8 @@ else
 		fi
 	fi
 
-	sudo sysctl -w net.core.rmem_max=16777216
-	sudo sysctl -w net.core.rmem_default=212992
+	# sudo sysctl -w net.core.rmem_max=16777216
+	# sudo sysctl -w net.core.rmem_default=212992
 
 	# Only work for current shell process (inherited by subprocess) -> so we need to source the script
 	ulimit -n 1024000

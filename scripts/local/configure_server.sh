@@ -51,10 +51,10 @@ else
 		fi
 	fi
 
-	sudo sysctl -w net.core.rmem_max=16777216
-	sudo sysctl -w net.core.rmem_default=212992
+	# sudo sysctl -w net.core.rmem_max=16777216
+	# sudo sysctl -w net.core.rmem_default=212992
 
-	sudo hugeadm --thp-never
+	# sudo hugeadm --thp-never
 
 	#sudo sysctl -w vm.dirty_background_ratio=5
 	#sudo sysctl -w vm.dirty_ratio=40

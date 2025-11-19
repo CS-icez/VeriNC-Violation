@@ -19,8 +19,11 @@ RUN apt-get update && apt-get install -y \
     liblz4-dev libzstd-dev libjemalloc-dev \
     pkg-config \
     gcc-7 g++-7 \
+    iproute2 net-tools \
+    psmisc \
+    bc \
+    rsync \
     gdb \
-    iproute2 \
     && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 70 \
     && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 70 \
     && rm -rf /var/lib/apt/lists/*

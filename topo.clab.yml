@@ -38,8 +38,9 @@ topology:
           sleep infinity
           "
       exec:
-        - hostname bf3
+        - hostname tofino
         - bash -c "$PROJ_DIR/config_ssh.sh"
+        - bash -c "cd $PROJ_DIR && bash scripts/local/configure_switchos.sh"
         # - sleep 33
 
     client0: # Main client dl11.
@@ -53,10 +54,11 @@ topology:
         PROJ_DIR: /root/farreach
       cmd: bash -i -c "cat /root/farreach/set-client-env.sh >> /root/.bashrc && sleep infinity"
       exec:
-        - hostname dl11
+        - hostname client0
         - ip link set dev veth address 3c:fd:fe:bb:ca:78 # Containerlab: docker run -> veth pairs -> docker exec.
         - ip addr add 10.0.1.11/24 dev veth
         - bash -c "$PROJ_DIR/config_ssh.sh"
+        - bash -c "cd $PROJ_DIR && bash scripts/local/configure_client.sh 0"
 
     client1: # Secondary client dl20.
       kind: linux
@@ -69,10 +71,11 @@ topology:
         PROJ_DIR: /root/farreach
       cmd: bash -i -c "cat /root/farreach/set-client-env.sh >> /root/.bashrc && sleep infinity"
       exec:
-        - hostname dl20
+        - hostname client1
         - ip link set dev veth address 9c:69:b4:60:34:f4
         - ip addr add 10.0.1.12/24 dev veth
         - bash -c "$PROJ_DIR/config_ssh.sh"
+        - bash -c "cd $PROJ_DIR && bash scripts/local/configure_client.sh 1"
 
     server0: # Server 0 dl21.
       kind: linux
@@ -85,10 +88,11 @@ topology:
         PROJ_DIR: /root/farreach
       cmd: bash -i -c "cat /root/farreach/set-server-env.sh >> /root/.bashrc && sleep infinity"
       exec:
-        - hostname dl21
+        - hostname server0
         - ip link set dev veth address 9c:69:b4:60:34:e1
         - ip addr add 10.0.1.13/24 dev veth
         - bash -c "$PROJ_DIR/config_ssh.sh"
+        - bash -c "cd $PROJ_DIR && bash scripts/local/configure_server.sh 0"
 
     server1: # Server 1 dl30.
       kind: linux
@@ -101,10 +105,11 @@ topology:
         PROJ_DIR: /root/farreach
       cmd: bash -i -c "cat /root/farreach/set-server-env.sh >> /root/.bashrc && sleep infinity"
       exec:
-        - hostname dl30
+        - hostname server1
         - ip link set dev veth address 9c:69:b4:60:ef:c1
         - ip addr add 10.0.1.14/24 dev veth
         - bash -c "$PROJ_DIR/config_ssh.sh"
+        - bash -c "cd $PROJ_DIR && bash scripts/local/configure_server.sh 1"
 
   links:
     - endpoints: ["client0:veth", "proxy:veth-client0"]

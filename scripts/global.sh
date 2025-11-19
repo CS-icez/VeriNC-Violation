@@ -5,14 +5,14 @@ USER="root"
 SWITCH_PRIVATEKEY=".ssh/switch-private-key"
 CONNECTION_PRIVATEKEY=".ssh/connection-private-key"
 
-MAIN_CLIENT="dl11" # used in recovery mode
-SECONDARY_CLIENT="dl20"
+MAIN_CLIENT="client0" # used in recovery mode
+SECONDARY_CLIENT="client1"
 
 # NOTE: must be consistent with each config.ini
-SERVER0="dl21"
-SERVER1="dl30"
+SERVER0="server0"
+SERVER1="server1"
 
-LEAFSWITCH="bf3"
+LEAFSWITCH="tofino"
 # NOTE:SPINESWITCH is not used at this stage
 # SPINESWITCH="bf3" 
 
