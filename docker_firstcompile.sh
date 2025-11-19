@@ -18,7 +18,5 @@ compile_method() {
 }
 
 compile_method farreach
-compile_method nocache
-compile_method netcache
 
 echo "[COMPILE][DOCKER] all methods compiled."

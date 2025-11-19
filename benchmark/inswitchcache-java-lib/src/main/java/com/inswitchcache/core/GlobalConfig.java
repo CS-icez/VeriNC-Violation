@@ -156,7 +156,7 @@ public final class GlobalConfig {
     try{
     GlobalConfig.maxLoadBatchSize = Integer.parseInt(ini.get("global", "max_load_batch_size"));
     }catch(Exception e){
-      max_load_batch_size = 10000;
+      GlobalConfig.maxLoadBatchSize = 10000;
       System.err.println("[Warning][GlobalConfig] max_load_batch_size forget in keydump/config.ini set default 10000");
     }
 

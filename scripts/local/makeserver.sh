@@ -1,3 +1,4 @@
+set -e
 if [ "x${is_common_included}" != "x1" ]
 then
 	source scripts/common.sh
