@@ -3,6 +3,7 @@ import time
 import json
 import math
 from itertools import product
+import random
 
 import logging
 import ptf
@@ -35,7 +36,6 @@ snapshot_flag_list = [0, 1]
 case1_list = [0, 1]
 access_val_mode_list = [0, 1, 2, 3]
 is_largevalueblock_list = [0, 1]
-
 
 if test_param_get("arch") == "tofino":
     MIR_SESS_COUNT = 1024

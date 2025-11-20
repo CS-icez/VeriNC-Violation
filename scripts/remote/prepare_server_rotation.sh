@@ -37,5 +37,5 @@ then
 	sed -i '1,$s/switch_kv_bucket_num=TODO/switch_kv_bucket_num='${cache_size}/'' ${DIRNAME}/config.ini
 fi
 
-echo "Sync new ${DIRNAME}/config.ini to all machines"
-source scripts/remote/sync_file.sh ${DIRNAME} config.ini
+# echo "Sync new ${DIRNAME}/config.ini to all machines"
+# source scripts/remote/sync_file.sh ${DIRNAME} config.ini

@@ -17,6 +17,9 @@ ycsb.iml
 *.log*
 benchmarkdist/.ycsb
 
+!ports.json
 README_CN.md
 clab-farreach/
 *-p4-build/
+pcap_output/
+zlog-cfg-cur

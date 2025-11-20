@@ -1,0 +1,19 @@
+ucli
+port-add 1/0 100G RS
+an-set 1/0 1
+port-enb 1/0
+port-add 2/0 100G RS
+an-set 2/0 1
+port-enb 2/0
+port-add 3/0 100G RS
+an-set 3/0 1
+port-enb 3/0
+port-add 4/0 100G RS
+an-set 4/0 1
+port-enb 4/0
+port-add 5/0 100G RS
+an-set 5/0 1
+port-enb 5/0
+port-add 21/0 100G RS
+an-set 21/0 1
+port-enb 21/0
