@@ -22,8 +22,10 @@ cd ${DIRNAME}
 # NOTE: you need to launch per-switch data plane and control plane before running this script
 
 echo "clear tmp files in remote servers and controller if any"
+set +e
 ssh ${USER}@${SERVER0} "cd ${SERVER_ROOTPATH}/${DIRNAME}; rm tmp_server.out; rm tmp_reflector.out; rm tmp_controller.out; rm tmp_controller_bwcost.out"
 ssh ${USER}@${SERVER1} "cd ${SERVER_ROOTPATH}/${DIRNAME}; rm tmp_server.out"
+set -e
 
 cd ..
 source scripts/remote/stopservertestbed.sh

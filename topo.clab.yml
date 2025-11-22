@@ -23,30 +23,34 @@ topology:
         - ~/myrepo/verinc-farreach:/root/farreach
       env:
         PROJ_DIR: /root/farreach
+        IMAGE_PROJ_DIR: /opt/farreach
       cmd: |
           bash -ic "
           cd $PROJ_DIR
           cat set-tofino-env.sh >> /root/.bashrc
-          echo 'source $PROJ_DIR/scripts/global.sh' >> /root/.bashrc
+          echo source $PROJ_DIR/scripts/global.sh >> /root/.bashrc
           source /root/.bashrc
           cp farreach-p4-build/netbufferv4.conf $SDE_INSTALL/share/p4/targets/tofino
+          cp nocache-p4-build/nocache_16.conf $SDE_INSTALL/share/p4/targets/tofino
           rm model*.log bf_drivers.log*
           rm $SDE_INSTALL/lib/libpltfm_mgr.so
           $SDE_INSTALL/bin/veth_setup.sh 300
-          $SDE/run_tofino_model.sh -f ports.json -p netbufferv4 &> log/tofino_model.log &
+          program_name=nocache_16
+          $SDE/run_tofino_model.sh -f ports.json -p $program_name &> log/tofino_model.log &
           sleep 3
-          $SDE/run_switchd.sh -p netbufferv4 &> log/switchd.log
-          # sleep 18
-          # cd dev_root/controller
-          # python3.8 farreach.py --bfrt-ip 172.20.20.100 --switch-ip 10.0.0.100 --log-level DEBUG &> ../../log/controller.log
+          $SDE/run_switchd.sh -p $program_name &> log/switchd.log &
+          sleep 15
+          cd nocache
+          bash localscripts/launchswitchostestbed.sh
           sleep infinity
           "
       exec:
-        - bash -ic "nohup python3.8 -u $PROJ_DIR/tofino_veth_fwder.py &> $PROJ_DIR/log/tofino_veth_fwder.log &"
         - hostname tofino
         - bash -c "$PROJ_DIR/config_ssh.sh"
+        - bash -c "cp $IMAGE_PROJ_DIR/farreach/switchos $PROJ_DIR/farreach"
         - bash -c "cd $PROJ_DIR && bash scripts/local/configure_switchos.sh"
         - sleep 18
+        - bash -ic "nohup python3.8 -u $PROJ_DIR/tofino_veth_fwder.py &> $PROJ_DIR/log/tofino_veth_fwder.log &"
 
     client0: # Main client dl11.
       kind: linux
@@ -89,6 +93,7 @@ topology:
       binds:
         - /dev/hugepages:/mnt/huge
         - ~/myrepo/verinc-farreach:/root/farreach
+        - ~/myrepo/verinc-farreach/db/server0:/tmp
       env:
         PROJ_DIR: /root/farreach
       cmd: bash -c "cat /root/farreach/set-server-env.sh >> /root/.bashrc && sleep infinity"
@@ -106,6 +111,7 @@ topology:
       binds:
         - /dev/hugepages:/mnt/huge
         - ~/myrepo/verinc-farreach:/root/farreach
+        - ~/myrepo/verinc-farreach/db/server1:/tmp
       env:
         PROJ_DIR: /root/farreach
       cmd: bash -c "cat /root/farreach/set-server-env.sh >> /root/.bashrc && sleep infinity"

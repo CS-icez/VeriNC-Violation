@@ -4,7 +4,7 @@ hot_threshold = 20 # for 200 keys under 2 server threads for YCSB-based workload
 #hot_threshold = 100 # for 200/500 keys under 16/2 server threads (around from 125) for NetCache synthetic workload
 #hot_threshold = 200 # for 500 keys under 16/2 server threads w/o WAL or 1000 keys under 16/2 server threads
 
-this_dir = '/root/jzcai/farreach-private/nocache/'
+this_dir = '/root/farreach/nocache/'
 
 config = configparser.ConfigParser()
 with open(os.path.join(this_dir, "config.ini"), "r") as f:

@@ -2,4 +2,4 @@ workload=site.ycsb.workloads.DeterministicWorkload
 recordcount=1
 operationcount=3
 table=usertable
-deterministic.tracefile=benchmark/ycsb/workloads/violation-trace.txt
+deterministic.tracefile=workloads/violation-trace.txt

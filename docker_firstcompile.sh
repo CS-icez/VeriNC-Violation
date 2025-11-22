@@ -17,6 +17,8 @@ compile_method() {
     bash scripts/local/makeswitchos.sh
 }
 
+source /root/.bashrc
 compile_method farreach
+compile_method nocache
 
 echo "[COMPILE][DOCKER] all methods compiled."

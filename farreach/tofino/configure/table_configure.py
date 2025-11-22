@@ -353,7 +353,7 @@ class TableConfigure(BfRuntimeTest):
             self.hash_for_partition_tbl.entry_add(self.target, [key], [data])
      
     def configure_hash_partition_tbl(self):
-        hash_range_per_server = switch_partition_count / server_total_logical_num
+        hash_range_per_server = switch_partition_count // server_total_logical_num
         for tmpoptype in [
             GETREQ,
             CACHE_POP_INSWITCH,

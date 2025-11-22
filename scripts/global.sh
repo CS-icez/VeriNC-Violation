@@ -2,8 +2,8 @@
 
 USER="root"
 
-SWITCH_PRIVATEKEY=".ssh/switch-private-key"
-CONNECTION_PRIVATEKEY=".ssh/connection-private-key"
+SWITCH_PRIVATEKEY=".ssh/id_ed25519"
+CONNECTION_PRIVATEKEY=".ssh/id_ed25519"
 
 MAIN_CLIENT="client0" # used in recovery mode
 SECONDARY_CLIENT="client1"

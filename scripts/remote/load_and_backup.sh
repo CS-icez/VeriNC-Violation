@@ -4,7 +4,7 @@ then
 fi
 
 #set -x
-#set -e
+set -e
 
 if [ $# -ne 0 ]
 then

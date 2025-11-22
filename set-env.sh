@@ -12,6 +12,12 @@ function build_cs_dev() {
     cd -
 }
 
+function build_tofino() {
+    cd $PROJ_DIR
+    docker build -f tofino.dockerfile -t farreach-tofino:latest .
+    cd -
+}
+
 function update_config() {
     cd $PROJ_DIR
     bash scripts/local/update_config_files.sh
