@@ -5,7 +5,7 @@ compile_method() {
     local method="$1"
     echo "[COMPILE][DOCKER] first compilation for ${method}"
 
-    export DIRNAME="${method}"
+    bash scripts/remote/setmethod.sh ${method}
 
     echo "[COMPILE][DOCKER] building client for ${method}"
     bash scripts/local/makeclient.sh
@@ -18,7 +18,7 @@ compile_method() {
 }
 
 source /root/.bashrc
-compile_method farreach
 compile_method nocache
+compile_method farreach
 
 echo "[COMPILE][DOCKER] all methods compiled."

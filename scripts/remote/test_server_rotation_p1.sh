@@ -2,7 +2,7 @@ if [ "x${is_common_included}" != "x1" ]; then
 	source scripts/common.sh
 fi
 
-#set -x
+set -x
 
 if [ $# -lt 1 ]; then
 	echo "Usage: bash scripts/remote/test_server_rotation_p1.sh <isSingleRotation> [targetthpt]"
@@ -47,7 +47,7 @@ then
 	sed -i '1,$s/controller_snapshot_period=TODO/controller_snapshot_period='${snapshot_period}/'' ${DIRNAME}/config.ini
 	sed -i '1,$s/switch_kv_bucket_num=TODO/switch_kv_bucket_num='${cache_size}/'' ${DIRNAME}/config.ini
 fi
-source scripts/remote/sync_file.sh ${DIRNAME} config.ini
+# source scripts/remote/sync_file.sh ${DIRNAME} config.ini
 
 echo "start servers"
 ssh ${USER}@${SERVER0} "cd ${SERVER_ROOTPATH}/${DIRNAME}; nohup ./server 0 >tmp_serverrotation_part1_server.out 2>&1 &"

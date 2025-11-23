@@ -20,7 +20,7 @@ cp ${tmpdstdirname}/${tmpfilename} ${tmpdstdirname}/${tmpfilename}.bak
 echo "Replace ${tmpdstdirname}/${tmpfilename} by ${tmpsrcdirname}/${tmpfilename}"
 cp ${tmpsrcdirname}/${tmpfilename} ${tmpdstdirname}/${tmpfilename}
 echo "Sync new ${tmpdstdirname}/${tmpfilename} to all machines"
-bash scripts/remote/sync_file.sh ${tmpdstdirname} ${tmpfilename}
+# bash scripts/remote/sync_file.sh ${tmpdstdirname} ${tmpfilename}
 
 #echo "Copy ${tmpsrcdirname}/${tmpfilename} to ${tmpdstdirname}/${tmpfilename} in ${LEAFSWITCH}"
 #scp ${tmpsrcdirname}/${tmpfilename} ${USER}@${LEAFSWITCH}:${SWITCH_ROOTPATH}/${tmpdstdirname}

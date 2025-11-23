@@ -61,14 +61,14 @@ fi
 python generate_dynamicrules.py ${tmpworkloadname}
 cd ../../
 
-echo "Sync keydump files for ${tmpworkloadname} to clients/servers..."
-syncfiles_toclient benchmark/output ${tmpworkloadname}-hotest.out
-syncfiles_toclient benchmark/output ${tmpworkloadname}-coldest.out
-syncfiles_toclient benchmark/output ${tmpworkloadname}-nearhot.out
-syncfiles_toclient benchmark/output/${tmpworkloadname}-hotinrules \*
-syncfiles_toclient benchmark/output/${tmpworkloadname}-hotoutrules \*
-syncfiles_toclient benchmark/output/${tmpworkloadname}-randomrules \*
-syncfiles_toclient benchmark/output/${tmpworkloadname}-pregeneration \*
+# echo "Sync keydump files for ${tmpworkloadname} to clients/servers..."
+# syncfiles_toclient benchmark/output ${tmpworkloadname}-hotest.out
+# syncfiles_toclient benchmark/output ${tmpworkloadname}-coldest.out
+# syncfiles_toclient benchmark/output ${tmpworkloadname}-nearhot.out
+# syncfiles_toclient benchmark/output/${tmpworkloadname}-hotinrules \*
+# syncfiles_toclient benchmark/output/${tmpworkloadname}-hotoutrules \*
+# syncfiles_toclient benchmark/output/${tmpworkloadname}-randomrules \*
+# syncfiles_toclient benchmark/output/${tmpworkloadname}-pregeneration \*
 
 # sync hotkey files to servers for netcache/distcache to resume cached keyset under server rotation
-syncfiles_toall benchmark/output \*-hotest.out
+# syncfiles_toall benchmark/output \*-hotest.out

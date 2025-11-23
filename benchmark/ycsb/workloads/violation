@@ -1,5 +1,5 @@
 workload=site.ycsb.workloads.DeterministicWorkload
 recordcount=1
 operationcount=3
-table=usertable
+# table=usertable
 deterministic.tracefile=workloads/violation-trace.txt

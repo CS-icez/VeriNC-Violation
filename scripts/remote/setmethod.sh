@@ -19,4 +19,4 @@ then
 fi
 
 sed -i "s/^DIRNAME=.*/DIRNAME=\"${methodname}\"/g" scripts/common.sh
-source scripts/remote/sync_file.sh scripts common.sh
+# source scripts/remote/sync_file.sh scripts common.sh

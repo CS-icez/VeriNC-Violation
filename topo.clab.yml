@@ -22,8 +22,8 @@ topology:
         - /dev/hugepages:/mnt/huge
         - ~/myrepo/verinc-farreach:/root/farreach
       env:
-        PROJ_DIR: /root/farreach
-        IMAGE_PROJ_DIR: /opt/farreach
+        PROJ_DIR: /opt/farreach
+        LOG_DIR: /root/farreach/log
       cmd: |
           bash -ic "
           cd $PROJ_DIR
@@ -36,9 +36,9 @@ topology:
           rm $SDE_INSTALL/lib/libpltfm_mgr.so
           $SDE_INSTALL/bin/veth_setup.sh 300
           program_name=nocache_16
-          $SDE/run_tofino_model.sh -f ports.json -p $program_name &> log/tofino_model.log &
+          $SDE/run_tofino_model.sh -f ports.json -p $program_name &> $LOG_DIR/tofino_model.log &
           sleep 3
-          $SDE/run_switchd.sh -p $program_name &> log/switchd.log &
+          $SDE/run_switchd.sh -p $program_name &> $LOG_DIR/switchd.log &
           sleep 15
           cd nocache
           bash localscripts/launchswitchostestbed.sh
@@ -47,21 +47,21 @@ topology:
       exec:
         - hostname tofino
         - bash -c "$PROJ_DIR/config_ssh.sh"
-        - bash -c "cp $IMAGE_PROJ_DIR/farreach/switchos $PROJ_DIR/farreach"
+        # - bash -c "cp $IMAGE_PROJ_DIR/farreach/switchos $PROJ_DIR/farreach"
         - bash -c "cd $PROJ_DIR && bash scripts/local/configure_switchos.sh"
         - sleep 18
         - bash -ic "nohup python3.8 -u $PROJ_DIR/tofino_veth_fwder.py &> $PROJ_DIR/log/tofino_veth_fwder.log &"
 
     client0: # Main client dl11.
       kind: linux
-      image: farreach-client-server:dev
+      image: farreach-client-server:latest
       mgmt-ipv4: 172.20.20.11
       binds:
         - /dev/hugepages:/mnt/huge
         - ~/myrepo/verinc-farreach:/root/farreach
       env:
-        PROJ_DIR: /root/farreach
-      cmd: bash -c "cat /root/farreach/set-client-env.sh >> /root/.bashrc && sleep infinity"
+        PROJ_DIR: /opt/farreach
+      cmd: bash -c "cat /opt/farreach/set-client-env.sh >> /root/.bashrc && sleep infinity"
       exec:
         - hostname client0
         - ip link set dev veth address 3c:fd:fe:bb:ca:78 # Containerlab: docker run -> veth pairs -> docker exec.
@@ -71,14 +71,14 @@ topology:
 
     client1: # Secondary client dl20.
       kind: linux
-      image: farreach-client-server:dev
+      image: farreach-client-server:latest
       mgmt-ipv4: 172.20.20.12
       binds:
         - /dev/hugepages:/mnt/huge
         - ~/myrepo/verinc-farreach:/root/farreach
       env:
-        PROJ_DIR: /root/farreach
-      cmd: bash -c "cat /root/farreach/set-client-env.sh >> /root/.bashrc && sleep infinity"
+        PROJ_DIR: /opt/farreach
+      cmd: bash -c "cat /opt/farreach/set-client-env.sh >> /root/.bashrc && sleep infinity"
       exec:
         - hostname client1
         - ip link set dev veth address 9c:69:b4:60:34:f4
@@ -88,15 +88,15 @@ topology:
 
     server0: # Server 0 dl21.
       kind: linux
-      image: farreach-client-server:dev
+      image: farreach-client-server:latest
       mgmt-ipv4: 172.20.20.13
       binds:
         - /dev/hugepages:/mnt/huge
         - ~/myrepo/verinc-farreach:/root/farreach
         - ~/myrepo/verinc-farreach/db/server0:/tmp
       env:
-        PROJ_DIR: /root/farreach
-      cmd: bash -c "cat /root/farreach/set-server-env.sh >> /root/.bashrc && sleep infinity"
+        PROJ_DIR: /opt/farreach
+      cmd: bash -c "cat /opt/farreach/set-server-env.sh >> /root/.bashrc && sleep infinity"
       exec:
         - hostname server0
         - ip link set dev veth address 9c:69:b4:60:34:e1
@@ -106,15 +106,15 @@ topology:
 
     server1: # Server 1 dl30.
       kind: linux
-      image: farreach-client-server:dev
+      image: farreach-client-server:latest
       mgmt-ipv4: 172.20.20.14
       binds:
         - /dev/hugepages:/mnt/huge
         - ~/myrepo/verinc-farreach:/root/farreach
         - ~/myrepo/verinc-farreach/db/server1:/tmp
       env:
-        PROJ_DIR: /root/farreach
-      cmd: bash -c "cat /root/farreach/set-server-env.sh >> /root/.bashrc && sleep infinity"
+        PROJ_DIR: /opt/farreach
+      cmd: bash -c "cat /opt/farreach/set-server-env.sh >> /root/.bashrc && sleep infinity"
       exec:
         - hostname server1
         - ip link set dev veth address 9c:69:b4:60:ef:c1

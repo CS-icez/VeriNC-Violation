@@ -16,9 +16,9 @@ LEAFSWITCH="tofino"
 # NOTE:SPINESWITCH is not used at this stage
 # SPINESWITCH="bf3" 
 
-CLIENT_ROOTPATH="/root/farreach"
-SWITCH_ROOTPATH="/root/farreach"
-SERVER_ROOTPATH="/root/farreach"
+CLIENT_ROOTPATH="/opt/farreach"
+SWITCH_ROOTPATH="/opt/farreach"
+SERVER_ROOTPATH="/opt/farreach"
 
 # backup rocksdb after loading phase
 BACKUPS_ROOTPATH="/tmp/rocksdbbackups"

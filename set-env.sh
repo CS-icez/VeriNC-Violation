@@ -12,9 +12,21 @@ function build_cs_dev() {
     cd -
 }
 
-function build_tofino() {
+function build_cs_latest() {
     cd $PROJ_DIR
-    docker build -f tofino.dockerfile -t farreach-tofino:latest .
+    docker build -f client-server-latest.dockerfile -t farreach-client-server:latest .
+    cd -
+}
+
+function build_tofino_dev() {
+    cd $PROJ_DIR
+    docker build -f tofino-dev.dockerfile -t farreach-tofino:dev .
+    cd -
+}
+
+function build_tofino_latest() {
+    cd $PROJ_DIR
+    docker build -f tofino-latest.dockerfile -t farreach-tofino:latest .
     cd -
 }
 
