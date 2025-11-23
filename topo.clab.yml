@@ -35,12 +35,12 @@ topology:
           rm model*.log bf_drivers.log*
           rm $SDE_INSTALL/lib/libpltfm_mgr.so
           $SDE_INSTALL/bin/veth_setup.sh 300
-          program_name=nocache_16
+          program_name=netbufferv4
           $SDE/run_tofino_model.sh -f ports.json -p $program_name &> $LOG_DIR/tofino_model.log &
           sleep 3
           $SDE/run_switchd.sh -p $program_name &> $LOG_DIR/switchd.log &
           sleep 15
-          cd nocache
+          cd farreach
           bash localscripts/launchswitchostestbed.sh
           sleep infinity
           "

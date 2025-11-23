@@ -203,7 +203,7 @@ class TableConfigure(BfRuntimeTest):
 
         for client_fpport in client_fpports:
             port, chnl = client_fpport.split("/")
-            devport = int(port)
+            devport = int(port) * 4 - 4
             self.port_table.entry_add(
                 self.target,
                 [self.port_table.make_key([gc.KeyTuple('$DEV_PORT', devport)])],
@@ -213,7 +213,7 @@ class TableConfigure(BfRuntimeTest):
             self.client_devports.append(devport)
         for server_fpport in server_fpports:
             port, chnl = server_fpport.split("/")
-            devport = int(port) 
+            devport = int(port) * 4 - 4
             self.port_table.entry_add(
                 self.target,
                 [self.port_table.make_key([gc.KeyTuple('$DEV_PORT', devport)])],
