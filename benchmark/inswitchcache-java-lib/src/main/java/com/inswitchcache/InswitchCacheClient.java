@@ -917,6 +917,9 @@ public final class InswitchCacheClient {
     if (nodeIdxForEval == -1) {
       // per-server load of cache hits
       cachehitLoadList[serveridx].getAndIncrement();
+      System.out.println("[DEBUG][InSwitchCacheClient] cache hit for key: " + result.getKey().toString());
+    } else {
+      System.out.println("[DEBUG][InSwitchCacheClient] cache miss for key: " + result.getKey().toString());
     }
     // per-switch load of cahce hits and per-server load of cache misses
     switchAndServerLoadList[nodeIdxForEval + 1].getAndIncrement();

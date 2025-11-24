@@ -180,12 +180,12 @@ public class PregeneratedWorkload extends Workload {
       perclientCurreqIdx[localLogicalClientIndex] = curidx + 1;
     } else {
       // (1) Loop until 10 seconds
-      tmpreq = perclientInmemoryReqList[localLogicalClientIndex].get(0);
-      perclientCurreqIdx[localLogicalClientIndex] = 1;
+      // tmpreq = perclientInmemoryReqList[localLogicalClientIndex].get(0);
+      // perclientCurreqIdx[localLogicalClientIndex] = 1;
 
       // DEPRECATED: (2) return false to stop client thread, which will count down completeLatch to stop status thread
       // NOTE: if we return false, client threads will still be alive yet without increasing opsdone, then the thpt is wrong
-      //return false;
+      return false;
     }
 
     String table = "usertable";

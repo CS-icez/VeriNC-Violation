@@ -2,7 +2,7 @@ if [ "x${is_common_included}" != "x1" ]; then
 	source scripts/common.sh
 fi
 
-#set -x
+# set -x
 
 if [ $# -lt 2 ]; then
 	echo "Usage: bash scripts/remote/test_server_rotation_p2.sh <isSingleRotation> <rotationidx> [targetthpt]"

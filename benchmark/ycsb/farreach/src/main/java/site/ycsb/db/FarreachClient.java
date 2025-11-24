@@ -22,6 +22,7 @@
 package site.ycsb.db;
 
 import java.util.*;
+import java.nio.charset.StandardCharsets;
 
 import site.ycsb.ByteArrayByteIterator;
 import site.ycsb.ByteIterator;
@@ -65,6 +66,22 @@ public class FarreachClient extends RemoteDB {
     super.cleanup();
   }
 
+  private String bytesToString(byte[] data) {
+    if (data == null) return "null";
+    if (data.length == 0) return "";
+    return new String(data, StandardCharsets.UTF_8);
+  }
+  // Added: hex dump helper
+  private String bytesToHex(byte[] data) {
+    if (data == null) return "null";
+    StringBuilder sb = new StringBuilder(data.length * 2);
+    // Only print first 8 bytes.
+    for (int i = 0; i < Math.min(data.length, 8); i++) {
+      sb.append(String.format("%02x", data[i]));
+    }
+    return sb.toString();
+  }
+
   @Override
   public Status read(String table, String key, Set<String> fields, Map<String, ByteIterator> result) {
     // Log information
@@ -86,16 +103,19 @@ public class FarreachClient extends RemoteDB {
       // 1);
     }
 
+    System.out.println("[FarreachClient][SEND][READ] key=" + key);
     // send and recv
     DbUdpNativeResult dbResult = this.dbInterface.getNative(GlobalConfig.getCurmethodId(), tmpKey,
-        GlobalConfig.getServerIp(), 
-         (short)(GlobalConfig.getServerWorkerPortStart() +
+        GlobalConfig.getServerIp(),
+        (short)(GlobalConfig.getServerWorkerPortStart() +
           (short) tmpKey.getHashPartitionIdx(GlobalConfig.getSwitchPartitionCount(),
                   GlobalConfig.getServerTotalLogicalNum())%GlobalConfig.getserverPerServerLogicalNum()));
     try {
       result.put(key, new ByteArrayByteIterator(dbResult.getPktContent()));
+      byte[] val = (dbResult.getValue() != null) ? dbResult.getValue().getValData() : null;
+      System.out.println("[FarreachClient][RECV][READ] key=" + key + " value=" + bytesToHex(val));
     } catch (NullPointerException e) {
-      
+      System.out.println("[FarreachClient][RECV][READ] key=" + key + " value=null");
     }
     InswitchCacheClient.updateLoadStatistics(this.localLogicalClientIndex, dbResult);
 
@@ -127,6 +147,7 @@ public class FarreachClient extends RemoteDB {
     // "[INFO][FarreachClient] client " + localLogicalClientIndex + ", key = " +
     // startkey + ", end key = " + endKey);
 
+    System.out.println("[FarreachClient][SEND][SCAN] startkey=" + startkey + " recordcount=" + recordcount);
     // send and recv
     DbUdpNativeResult dbResult = this.dbInterface.scanNative(GlobalConfig.getCurmethodId(), startKeyStruct,
         endKeyStruct, GlobalConfig.getServerIp(), GlobalConfig.getServerWorkerPortStart());
@@ -141,6 +162,8 @@ public class FarreachClient extends RemoteDB {
       for (int j = 0; j < tmppairs.size(); j++) {
         tmpmap.put(tmppairs.get(j).getKey().toString(),
             new ByteArrayByteIterator(tmppairs.get(j).getSnapshotRecord().getVal().getValData()));
+        System.out.println("[FarreachClient][RECV][SCAN] key=" + tmppairs.get(j).getKey().toString()
+            + " value=" + bytesToHex(tmppairs.get(j).getSnapshotRecord().getVal().getValData()));
       }
 
       result.add(tmpmap);
@@ -184,14 +207,14 @@ public class FarreachClient extends RemoteDB {
       // 1);
     }
 
+    System.out.println("[FarreachClient][SEND][UPDATE] key=" + key + " value=" + bytesToHex(tmpValue.getValData()));
     // send and recv
-    // System.out.println("debug port:"+(short)(GlobalConfig.getServerWorkerPortStart() +
-    // (short) tmpKey.getHashPartitionIdx(GlobalConfig.getSwitchPartitionCount(),
-    //         GlobalConfig.getServerTotalLogicalNum())%GlobalConfig.getserverPerServerLogicalNum())+"debug ip:" + GlobalConfig.getServerIp());
     DbUdpNativeResult dbResult = this.dbInterface.putNative(GlobalConfig.getCurmethodId(), tmpKey, tmpValue,
-        (short) this.globalClientLogicalIndex, GlobalConfig.getServerIp(),  (short)(GlobalConfig.getServerWorkerPortStart() +
+        (short) this.globalClientLogicalIndex, GlobalConfig.getServerIp(),
+        (short)(GlobalConfig.getServerWorkerPortStart() +
           (short) tmpKey.getHashPartitionIdx(GlobalConfig.getSwitchPartitionCount(),
                   GlobalConfig.getServerTotalLogicalNum())%GlobalConfig.getserverPerServerLogicalNum()));
+    System.out.println("[FarreachClient][RECV][UPDATE] key=" + key + " value=" + bytesToHex(tmpValue.getValData()));
 
     InswitchCacheClient.updateLoadStatistics(this.localLogicalClientIndex, dbResult);
 
@@ -222,11 +245,14 @@ public class FarreachClient extends RemoteDB {
       // 1);
     }
 
+    System.out.println("[FarreachClient][SEND][DELETE] key=" + key + " value=null");
     // send and recv
     DbUdpNativeResult dbResult = this.dbInterface.delNative(GlobalConfig.getCurmethodId(), tmpKey,
-        GlobalConfig.getServerIp(),  (short)(GlobalConfig.getServerWorkerPortStart() +
+        GlobalConfig.getServerIp(),
+        (short)(GlobalConfig.getServerWorkerPortStart() +
           (short) tmpKey.getHashPartitionIdx(GlobalConfig.getSwitchPartitionCount(),
                   GlobalConfig.getServerTotalLogicalNum())%GlobalConfig.getserverPerServerLogicalNum()));
+    System.out.println("[FarreachClient][RECV][DELETE] key=" + key + " value=null");
 
     InswitchCacheClient.updateLoadStatistics(this.localLogicalClientIndex, dbResult);
 
@@ -271,11 +297,14 @@ public class FarreachClient extends RemoteDB {
       // 1);
     }
 
+    System.out.println("[FarreachClient][SEND][INSERT] key=" + key + " value=" + bytesToHex(tmpValue.getValData()));
     // send and recv
     DbUdpNativeResult dbResult = this.dbInterface.putNative(GlobalConfig.getCurmethodId(), tmpKey, tmpValue,
-        (short) this.globalClientLogicalIndex, GlobalConfig.getServerIp(),  (short)(GlobalConfig.getServerWorkerPortStart() +
+        (short) this.globalClientLogicalIndex, GlobalConfig.getServerIp(),
+        (short)(GlobalConfig.getServerWorkerPortStart() +
           (short) tmpKey.getHashPartitionIdx(GlobalConfig.getSwitchPartitionCount(),
                   GlobalConfig.getServerTotalLogicalNum())%GlobalConfig.getserverPerServerLogicalNum()));
+    System.out.println("[FarreachClient][RECV][INSERT] key=" + key + " value=" + bytesToHex(tmpValue.getValData()));
 
     InswitchCacheClient.updateLoadStatistics(this.localLogicalClientIndex, dbResult);
 

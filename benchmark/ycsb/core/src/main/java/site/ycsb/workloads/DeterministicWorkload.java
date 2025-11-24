@@ -69,7 +69,7 @@ public class DeterministicWorkload extends Workload {
 
     // 使用 8B 对齐的 value，避免底层 padding 触发断言
     HashMap<String, ByteIterator> values = new HashMap<>();
-    values.put("field0", new StringByteIterator("v0000000")); // length = 8
+    values.put("field0", new StringByteIterator("vvvvvvvv")); // length = 8
     try {
       Status st = db.insert(table, key, values);
       System.out.println("[TRACE][DeterministicWorkload][LOAD] " + op + "->UPDATE " + key + " status=" + st);
@@ -119,7 +119,7 @@ public class DeterministicWorkload extends Workload {
         return st == Status.OK;
       } else if (op.equals("U") || op.equals("W")) {
         HashMap<String, ByteIterator> values = new HashMap<>();
-        values.put("field0", new StringByteIterator("v0000000")); // 8B 对齐
+        values.put("field0", new StringByteIterator("uuuuuuuu")); // 8B 对齐
         Status st = db.update(table, key, values);
         System.out.println("[TRACE][DeterministicWorkload] U " + key + " status=" + st);
         return st == Status.OK;

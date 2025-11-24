@@ -2,7 +2,7 @@ if [ "x${is_common_included}" != "x1" ]; then
 	source scripts/common.sh
 fi
 
-#set -x
+# set -x
 
 # NOTE: before running this script
 # (1) you need to finish loading phase by launching nocache switch/server + load_and_backup.sh
@@ -37,14 +37,14 @@ fi
 echo "[part 1] run single bottleneck server thread"
 
 echo "clear tmp files in remote clients/servers and controller"
-ssh ${USER}@${SECONDARY_CLIENT} "cd ${CLIENT_ROOTPATH}/benchmark/ycsb/; rm tmp_serverrotation_part1*.out; rm tmp_serverrotation_part2*.out"
-ssh ${USER}@${SERVER0} "cd ${SERVER_ROOTPATH}/${DIRNAME}; rm tmp_serverrotation_part1*.out; rm tmp_serverrotation_part2*.out; rm tmp_controller_bwcost.out"
-ssh ${USER}@${SERVER1} "cd ${SERVER_ROOTPATH}/${DIRNAME}; rm tmp_serverrotation_part2*.out"
+ssh ${USER}@${SECONDARY_CLIENT} "cd ${CLIENT_ROOTPATH}/benchmark/ycsb/; rm -f tmp_serverrotation_part1*.out; rm -f tmp_serverrotation_part2*.out"
+ssh ${USER}@${SERVER0} "cd ${SERVER_ROOTPATH}/${DIRNAME}; rm -f tmp_serverrotation_part1*.out; rm -f tmp_serverrotation_part2*.out; rm -f tmp_controller_bwcost.out"
+ssh ${USER}@${SERVER1} "cd ${SERVER_ROOTPATH}/${DIRNAME}; rm -f tmp_serverrotation_part2*.out"
 
-if [ "x${DIRNAME}" == "xfarreach" ]; then
-	# clear snapshot token every iteration to maintain snapshot id sequence
-	ssh -i /home/${USER}/${SWITCH_PRIVATEKEY} root@${LEAFSWITCH} "cd ${SWITCH_ROOTPATH}/${DIRNAME}/tofino; bash cleanup_obselete_snapshottoken.sh >tmp_cleanup.out 2>&1"
-fi
+# if [ "x${DIRNAME}" == "xfarreach" ]; then
+# 	# clear snapshot token every iteration to maintain snapshot id sequence
+# 	ssh -i /home/${USER}/${SWITCH_PRIVATEKEY} root@${LEAFSWITCH} "cd ${SWITCH_ROOTPATH}/${DIRNAME}/tofino; bash cleanup_obselete_snapshottoken.sh >tmp_cleanup.out 2>&1"
+# fi
 
 source scripts/remote/test_server_rotation_p1.sh 0
 

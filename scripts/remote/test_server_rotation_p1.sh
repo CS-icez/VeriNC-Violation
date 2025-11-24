@@ -2,7 +2,7 @@ if [ "x${is_common_included}" != "x1" ]; then
 	source scripts/common.sh
 fi
 
-set -x
+# set -x
 
 if [ $# -lt 1 ]; then
 	echo "Usage: bash scripts/remote/test_server_rotation_p1.sh <isSingleRotation> [targetthpt]"
@@ -22,7 +22,7 @@ fi
 tmptargetthpt=${tmptargetthpt%.*}
 
 echo "stop clients"
-source bash scripts/local/localstop.sh ycsb >/dev/null 2>&1
+bash scripts/local/localstop.sh ycsb
 sleep 5s
 ssh ${USER}@${SECONDARY_CLIENT} "cd ${CLIENT_ROOTPATH}; bash scripts/local/localstop.sh ycsb >/dev/null 2>&1"
 echo "kill clients"

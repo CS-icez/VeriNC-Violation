@@ -24,7 +24,7 @@
 
 #define SOCKET_TIMEOUT 5 // 5s
 // for pktloss of large value
-#define SERVER_SOCKET_TIMEOUT_USECS 10000 // 10ms
+#define SERVER_SOCKET_TIMEOUT_USECS 100000000 // 100s
 // for limited effect on system thpt of normal request timeout
 //#define CLIENT_SOCKET_TIMEOUT_SECS 1 // 1s (for static workload under server rotation)
 #define CLIENT_SOCKET_TIMEOUT_SECS 5 // 5s (for dynamic workload due to server-side disk contention of simulation overhead)
