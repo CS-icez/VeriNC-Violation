@@ -20,8 +20,8 @@ if [[ ${with_controller} -eq 1 ]]; then
 
 	echo "launch storage servers of ${DIRNAME}"
 	source scripts/remote/launchservertestbed.sh
-	#sleep 10s
-	sleep 60s
+	sleep 10s
+	# sleep 60s
 
 	echo "pre-admit hot keys"
 	cd ${DIRNAME}

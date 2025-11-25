@@ -85,6 +85,7 @@ topology:
         - ip addr add 10.0.1.12/24 dev veth
         - bash -c "$PROJ_DIR/config_ssh.sh"
         - bash -c "cd $PROJ_DIR && bash scripts/local/configure_client.sh 1"
+        - bash -c "cd $PROJ_DIR/benchmark/output/violation-pregeneration && mv -f logicalclient-1.out logicalclient-0.out"
 
     server0: # Server 0 dl21.
       kind: linux

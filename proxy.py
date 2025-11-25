@@ -20,29 +20,33 @@ for if1, if2 in veth_pairs:
     out_if_map[if2] = if1
 
 sockets = {}  # if_name -> socket.socket
-send_queue = queue.PriorityQueue()  # (send_time, pkt, out_if, callback)
+send_queue = []  # (send_time, pkt, out_if, condition)
 
 start_time_ns = -1
 def rel_time_str():
     rel_time_us = (time.time_ns() - start_time_ns) // 1000 if start_time_ns != -1 else 0
     return f"{rel_time_us:09,}"
 
-def delay_send(pkt: bytes, out_if: str, delay_ns: int, callback=None):
+def delay_send(pkt: bytes, out_if: str, delay_ns: int, cond=None):
     send_time = time.time_ns() + delay_ns
-    send_queue.put((send_time, pkt, out_if, callback))
+    send_queue.append((send_time, pkt, out_if, cond))
+    log('INFO', f'[{rel_time_str()}]Scheduled delayed packet to {out_if} in {delay_ns / 1e9:.3f}s')
 
 
 def deamon():
     while True:
-        send_time, pkt, out_if, callback = send_queue.get(block=True)
+        while not send_queue:
+            time.sleep(1)
+        send_time, pkt, out_if, cond = send_queue.pop(0)
         now = time.time_ns()
         if send_time > now:
             time.sleep((send_time - now) / 1e9)
         try:
             log('SEND', f'[{rel_time_str()}]Sending delayed packet to {out_if}')
+            if cond is not None:
+                while not cond():
+                    time.sleep(1)
             sockets[out_if].send(pkt)
-            if callback:
-                callback()
         except Exception as e:
             log('ERROR', f"Error sending packet to {out_if}: {e}")
 
@@ -76,9 +80,7 @@ def process_pkt(pkt: bytes, in_if: str):
         start_time_ns = time.time_ns()
     log('RECV', f'[{rel_time_str()}]Packet received from {in_if}:')
     print_pkt(pkt)
-    if in_if == 'veth-client0':
-        process_client0(pkt, in_if)
-    elif in_if == 'veth-server0':
+    if in_if == 'veth-server0':
         process_server0(pkt, in_if)
     else:
         out_if = out_if_map[in_if]
@@ -93,37 +95,9 @@ WARMUPACK         = 0x00d0
 def get_op(pkt: bytes) -> int:
     return (pkt[42] << 8) | pkt[43]
 
-client0_state = 0 # first read -> whatever
-
-def process_client0(pkt: bytes, in_if: str):
-    global client0_state
-
-    out_if = out_if_map[in_if]
-
-    if get_op(pkt) == GETREQ and client0_state == 0:
-        client0_state = 1
-        log('STATE', f'[{rel_time_str()}]client0_state: 0 -> 1')
-        delay_send(pkt, out_if, 10_000_000_000)
-        return
-    
-    # if is_request(pkt) and host1_state == 0:
-    #     if pkt[44] != 0x00:
-    #         log('WARN', f'[{rel_time_str()}]Unexpected request packet from {in_if}: host1_state=0 but non-first request')
-    #         return
-    #     host1_state = 1
-    #     log('STATE', f'[{rel_time_str()}]host1_state: 0 -> 1 (delay send)')
-    #     delay_send(pkt, out_if, 1_500_000_000)
-    #     return
-    
-    # if is_request(pkt) and host1_state == 1 and pkt[44] == 0x02:
-    #     log('DROP', f'[{rel_time_str()}]Dropping third request packet from {in_if}')
-    #     return
-
-    sockets[out_if].send(pkt)
-    log('SEND', f'Forwarding packet from {in_if} to {out_if}')
-    return
-
-# first SETVALID_INSWITCH -> second SETVALID_INSWITCH -> second SETVALID_INSWITCH delayed sent
+#    first SETVALID_INSWITCH 
+# -> second SETVALID_INSWITCH
+# -> first read
 server0_state = 0 
 
 def process_server0(pkt: bytes, in_if: str):
@@ -138,22 +112,44 @@ def process_server0(pkt: bytes, in_if: str):
         log('SEND', f'Forwarding packet from {in_if} to {out_if}')
         return
 
-    def cb():
+    def cond():
         global server0_state
-        log('STATE', f'[{rel_time_str()}]server0_state: {server0_state} -> 3')
-        server0_state = 3
+        return server0_state == 5
 
     if get_op(pkt) == SETVALID_INSWITCH and server0_state == 1:
         server0_state = 2
-        log('STATE', f'[{rel_time_str()}]server0_state: 1 -> 2 (delay send)')
-        delay_send(pkt, out_if, 200_000_000_000, cb)
+        log('STATE', f'[{rel_time_str()}]server0_state: 1 -> 2')
+        delay_send(pkt, out_if, 1_000_000_000)
         return
-
-    # if not is_request(pkt) and host1_state == 1:
-    #     host1_state = 2
-    #     log('STATE', f'[{rel_time_str()}]host1_state: 1 -> 2 (delay send)')
-    #     delay_send(pkt, out_if, 1_500_000_000)
-    #     return
+    
+    if get_op(pkt) == SETVALID_INSWITCH and server0_state > 1:
+        log('DROP', f'Dropping retransmitted SETVALID_INSWITCH packet from {in_if}')
+        return
+    
+    if get_op(pkt) == PUTREQ: # TODO: not this
+        if server0_state == 2:
+            server0_state = 4
+            log('STATE', f'[{rel_time_str()}]server0_state: 2 -> 4')
+            delay_send(pkt, out_if, 1_000_000_000)
+            return
+        elif server0_state == 3:
+            server0_state = 5
+            log('STATE', f'[{rel_time_str()}]server0_state: 3 -> 5')
+            delay_send(pkt, out_if, 1_000_000_000)
+            return
+    
+    if get_op(pkt) == GETREQ: # TODO: not this
+        if server0_state == 2:
+            server0_state = 3
+            log('STATE', f'[{rel_time_str()}]server0_state: 2 -> 3')
+            delay_send(pkt, out_if, 1_000_000_000)
+            return
+        elif server0_state == 4:
+            server0_state = 5
+            log('STATE', f'[{rel_time_str()}]server0_state: 4 -> 5')
+            send_queue.insert(0, (time.time_ns(), pkt, out_if, None))
+            log('INFO', f'[{rel_time_str()}]Scheduled delayed packet to {out_if} in 0s')
+            return
 
     sockets[out_if].send(pkt)
     log('SEND', f'Forwarding packet from {in_if} to {out_if}')
