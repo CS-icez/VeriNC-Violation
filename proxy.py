@@ -1,10 +1,10 @@
+from enum import Enum
 import select
 import string
 import socket
-import queue
 import time
 import threading
-import sys
+from typing import Callable
 
 veth_pairs = [
     ('veth-client0', 'veth-tofino0'),
@@ -27,28 +27,25 @@ def rel_time_str():
     rel_time_us = (time.time_ns() - start_time_ns) // 1000 if start_time_ns != -1 else 0
     return f"{rel_time_us:09,}"
 
-def delay_send(pkt: bytes, out_if: str, delay_ns: int, cond=None):
-    send_time = time.time_ns() + delay_ns
-    send_queue.append((send_time, pkt, out_if, cond))
-    log('INFO', f'[{rel_time_str()}]Scheduled delayed packet to {out_if} in {delay_ns / 1e9:.3f}s')
+def delay_send(pkt: bytes, out_if: str, cond=None, callback=None):
+    send_queue.append((pkt, out_if, cond, callback))
+    log('INFO', f'[{rel_time_str()}]Scheduled delayed packet to {out_if}')
 
 
 def deamon():
     while True:
-        while not send_queue:
-            time.sleep(1)
-        send_time, pkt, out_if, cond = send_queue.pop(0)
-        now = time.time_ns()
-        if send_time > now:
-            time.sleep((send_time - now) / 1e9)
-        try:
-            log('SEND', f'[{rel_time_str()}]Sending delayed packet to {out_if}')
-            if cond is not None:
-                while not cond():
-                    time.sleep(1)
-            sockets[out_if].send(pkt)
-        except Exception as e:
-            log('ERROR', f"Error sending packet to {out_if}: {e}")
+        time.sleep(0.1)
+        for idx, (pkt, out_if, cond, callback) in enumerate(send_queue):
+            try:
+                if cond is not None and not cond():
+                    continue
+                log('STATE', f'[{rel_time_str()}]Sending delayed packet to {out_if}: op={get_op_name(pkt)}')
+                sockets[out_if].send(pkt)
+                if callback is not None:
+                    callback()
+                send_queue.pop(idx)
+            except Exception as e:
+                log('ERROR', f"Error sending packet to {out_if}: {e}")
 
 
 def print_pkt(pkt: bytes):
@@ -70,87 +67,151 @@ def print_pkt(pkt: bytes):
         line += ascii_part
         log('DEBUG', line)
 
+def log_recv_pkt(pkt: bytes, in_if: str):
+    log('RECV', f'[{rel_time_str()}]Packet received from {in_if}: op={get_op_name(pkt)}')
+    # print_pkt(pkt)
 
 def process_pkt(pkt: bytes, in_if: str):
     global start_time_ns
     if pkt[0] == 0x33 and pkt[1] == 0x33:
-        log('DROP', f'Dropping IPv6 multicast packet from {in_if}')
+        # log('DROP', f'Dropping IPv6 multicast packet from {in_if}')
         return
     elif start_time_ns == -1:
         start_time_ns = time.time_ns()
-    log('RECV', f'[{rel_time_str()}]Packet received from {in_if}:')
-    print_pkt(pkt)
     if in_if == 'veth-server0':
         process_server0(pkt, in_if)
+    elif in_if == 'veth-client0':
+        process_client0(pkt, in_if)
+    elif in_if == 'veth-client1':
+        process_client1(pkt, in_if)
+    elif in_if == 'veth-tofino8':
+        process_tofino8(pkt, in_if)
     else:
+        log_recv_pkt(pkt, in_if)
         out_if = out_if_map[in_if]
         sockets[out_if].send(pkt)
         log('SEND', f'Forwarding packet from {in_if} to {out_if}')
 
-PUTREQ            = 0x0001
-GETREQ            = 0x0030
-SETVALID_INSWITCH = 0x0054
-WARMUPACK         = 0x00d0
+class OpCode(Enum):
+    PUTREQ                 = 0x0001
+    PUTREQ_INSWITCH        = 0x0005
+    PUTREQ_SEQ             = 0x0003
+    PUTRES_SEQ             = 0x000a
+    GETREQ                 = 0x0030
+    GETREQ_INSWITCH        = 0x0004
+    GETREQ_NLATEST         = 0x0060
+    GETRES_LATEST_SEQ      = 0x000b
+    GETRES_SEQ             = 0x006b
+    WARMUPREQ              = 0x0000
+    WARMUPACK              = 0x00d0
+    SETVALID_INSWITCH      = 0x0054
+    SETVALID_INSWITCH_ACK  = 0x0110
+    CACHE_POP_INSWITCH     = 0x007f
+    CACHE_POP_INSWITCH_ACK = 0x0070
 
 def get_op(pkt: bytes) -> int:
     return (pkt[42] << 8) | pkt[43]
 
-#    first SETVALID_INSWITCH 
-# -> second SETVALID_INSWITCH
-# -> first read
-server0_state = 0 
+def is_op(pkt: bytes, op_code: OpCode) -> bool:
+    return get_op(pkt) == op_code.value
 
-def process_server0(pkt: bytes, in_if: str):
-    global server0_state
+def get_op_name(pkt: bytes) -> str:
+    op = get_op(pkt)
+    try:
+        return OpCode(op).name
+    except ValueError:
+        return f'UNKNOWN_OP_{op:04x}'
+
+# 0: Initial state.
+# 1: First SETVALID_INSWITCH server0 -> switch.
+# 2; PUTREQ client0 -> switch.
+# 3: Second SETVALID_INSWITCH server0 -> switch. 
+# 4: GETREQ client1 -> switch.
+# 5: GETREQ_NLATEST switch -> server0.
+# 6: PUTREQ_SEQ switch -> server0.
+state = 0
+setvalid_cnt = 0
+
+def is_state_n(n: int) -> Callable[[], bool]:
+    global state
+    def f() -> bool:
+        return state == n
+    return f
+
+def inc_state():
+    global state
+    state += 1
+    log('STATE', f'[{rel_time_str()}]server0_state: {state - 1} -> {state}')
+
+def process_client0(pkt: bytes, in_if: str):
+    global state
 
     out_if = out_if_map[in_if]
 
-    if get_op(pkt) == SETVALID_INSWITCH and server0_state == 0:
-        server0_state = 1
-        log('STATE', f'[{rel_time_str()}]server0_state: 0 -> 1')
-        sockets[out_if].send(pkt)
-        log('SEND', f'Forwarding packet from {in_if} to {out_if}')
-        return
-
-    def cond():
-        global server0_state
-        return server0_state == 5
-
-    if get_op(pkt) == SETVALID_INSWITCH and server0_state == 1:
-        server0_state = 2
-        log('STATE', f'[{rel_time_str()}]server0_state: 1 -> 2')
-        delay_send(pkt, out_if, 1_000_000_000)
+    if is_op(pkt, OpCode.PUTREQ):
+        log_recv_pkt(pkt, in_if)
+        delay_send(pkt, out_if, is_state_n(1), inc_state)
         return
     
-    if get_op(pkt) == SETVALID_INSWITCH and server0_state > 1:
-        log('DROP', f'Dropping retransmitted SETVALID_INSWITCH packet from {in_if}')
+    log_recv_pkt(pkt, in_if)
+    sockets[out_if].send(pkt)
+    log('SEND', f'Forwarding packet from {in_if} to {out_if}')
+    return
+
+def process_client1(pkt: bytes, in_if: str):
+    global state
+
+    out_if = out_if_map[in_if]
+
+    if is_op(pkt, OpCode.GETREQ):
+        log_recv_pkt(pkt, in_if)
+        delay_send(pkt, out_if, is_state_n(3), inc_state)
         return
     
-    if get_op(pkt) == PUTREQ: # TODO: not this
-        if server0_state == 2:
-            server0_state = 4
-            log('STATE', f'[{rel_time_str()}]server0_state: 2 -> 4')
-            delay_send(pkt, out_if, 1_000_000_000)
-            return
-        elif server0_state == 3:
-            server0_state = 5
-            log('STATE', f'[{rel_time_str()}]server0_state: 3 -> 5')
-            delay_send(pkt, out_if, 1_000_000_000)
-            return
-    
-    if get_op(pkt) == GETREQ: # TODO: not this
-        if server0_state == 2:
-            server0_state = 3
-            log('STATE', f'[{rel_time_str()}]server0_state: 2 -> 3')
-            delay_send(pkt, out_if, 1_000_000_000)
-            return
-        elif server0_state == 4:
-            server0_state = 5
-            log('STATE', f'[{rel_time_str()}]server0_state: 4 -> 5')
-            send_queue.insert(0, (time.time_ns(), pkt, out_if, None))
-            log('INFO', f'[{rel_time_str()}]Scheduled delayed packet to {out_if} in 0s')
-            return
+    log_recv_pkt(pkt, in_if)
+    sockets[out_if].send(pkt)
+    log('SEND', f'Forwarding packet from {in_if} to {out_if}')
+    return
 
+def process_tofino8(pkt: bytes, in_if: str):
+    global state
+
+    out_if = out_if_map[in_if]
+
+    if is_op(pkt, OpCode.GETREQ_NLATEST):
+        log_recv_pkt(pkt, in_if)
+        delay_send(pkt, out_if, is_state_n(4), inc_state)
+        return
+    
+    if is_op(pkt, OpCode.PUTREQ_SEQ):
+        log_recv_pkt(pkt, in_if)
+        delay_send(pkt, out_if, is_state_n(5), inc_state)
+        return
+    
+    log_recv_pkt(pkt, in_if)
+    sockets[out_if].send(pkt)
+    log('SEND', f'Forwarding packet from {in_if} to {out_if}')
+    return
+
+def process_server0(pkt: bytes, in_if: str):
+    global state, setvalid_cnt
+
+    out_if = out_if_map[in_if]
+
+    if is_op(pkt, OpCode.SETVALID_INSWITCH):
+        if setvalid_cnt == 0: # First.
+            log_recv_pkt(pkt, in_if)
+            delay_send(pkt, out_if, is_state_n(0), inc_state)
+        elif setvalid_cnt == 1: # Second.
+            log_recv_pkt(pkt, in_if)
+            delay_send(pkt, out_if, is_state_n(2), inc_state)
+        else:
+            # log('DROP', f'Dropping retransmitted SETVALID_INSWITCH packet from {in_if}')
+            pass
+        setvalid_cnt += 1
+        return
+
+    log_recv_pkt(pkt, in_if)
     sockets[out_if].send(pkt)
     log('SEND', f'Forwarding packet from {in_if} to {out_if}')
     return
