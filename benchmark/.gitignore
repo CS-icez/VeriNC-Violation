@@ -2,7 +2,7 @@
 target
 
 # ignore output files from testing
-output*
+# output*
 
 # ignore standard Eclipse files
 .project
@@ -25,7 +25,7 @@ output*
 /differentbin/
 
 # ignore generated files
-*.out
+# *.out
 *.bak
 *.so
 

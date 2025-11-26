@@ -12,9 +12,6 @@ compile_method() {
 
     echo "[COMPILE][DOCKER] building server for ${method}"
     bash scripts/local/makeserver.sh
-
-    echo "[COMPILE][DOCKER] building switchos for ${method}"
-    bash scripts/local/makeswitchos.sh
 }
 
 source /root/.bashrc

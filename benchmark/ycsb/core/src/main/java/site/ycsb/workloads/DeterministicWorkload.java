@@ -28,7 +28,7 @@ public class DeterministicWorkload extends Workload {
   private static final String PROP_TRACE = "deterministic.tracefile";
   private static final String PROP_TABLE = "table";
 
-  // 不再 static，确保每次 YCSB 实例化都重新加载
+  // No longer static; reload on each YCSB instantiation
   private List<String> ops = Collections.emptyList();
   private AtomicInteger cursor = new AtomicInteger(0);
 
@@ -56,7 +56,7 @@ public class DeterministicWorkload extends Workload {
 
   @Override
   public boolean doInsert(DB db, Object threadState) {
-    // 加载阶段: 将 R/U/W 统一当作一次写操作 (UPDATE/INSERT 语义)
+    // Load phase: treat R/U/W uniformly as a write (UPDATE/INSERT semantics)
     int i = cursor.getAndIncrement();
     if (i >= ops.size()) return false;
     String line = ops.get(i).trim();
@@ -67,7 +67,7 @@ public class DeterministicWorkload extends Workload {
     String op = parts[0].toUpperCase(Locale.ROOT);
     String key = parts[1];
 
-    // 使用 8B 对齐的 value，避免底层 padding 触发断言
+    // Use 8B-aligned value to avoid low-level padding assertions
     HashMap<String, ByteIterator> values = new HashMap<>();
     values.put("field0", new StringByteIterator("vvvvvvvv")); // length = 8
     try {
@@ -82,15 +82,15 @@ public class DeterministicWorkload extends Workload {
 
   @Override
   public boolean doTransaction(DB db, Object threadState) {
-    // 事务阶段: 回放原始操作
-    if (!isTransactionPhase) return true; // 防御
+    // Transaction phase: replay original operations
+    if (!isTransactionPhase) return true; // Guard
     return replayNext(db);
   }
 
   @Override
   public void cleanup() throws WorkloadException {
-    // 允许重复运行时重新开始（若框架重用对象）
-    cursor.set(ops.size()); // 标记已用完；真正重置在下一次 init()
+    // Allow restart on repeated runs (in case the framework reuses the object)
+    cursor.set(ops.size()); // Mark as consumed; actual reset occurs in next init()
   }
 
   private boolean replayNext(DB db) {
@@ -119,7 +119,7 @@ public class DeterministicWorkload extends Workload {
         return st == Status.OK;
       } else if (op.equals("U") || op.equals("W")) {
         HashMap<String, ByteIterator> values = new HashMap<>();
-        values.put("field0", new StringByteIterator("uuuuuuuu")); // 8B 对齐
+        values.put("field0", new StringByteIterator("uuuuuuuu")); // 8B-aligned
         Status st = db.update(table, key, values);
         System.out.println("[TRACE][DeterministicWorkload] U " + key + " status=" + st);
         return st == Status.OK;

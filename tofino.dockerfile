@@ -8,5 +8,7 @@ RUN mkdir -p /tmp /run && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/farreach
-COPY . /opt/farreach
-RUN bash docker_firstcompile.sh
+COPY . .
+RUN bash docker_firstcompile_tofino.sh
+
+CMD ["/bin/bash"]

@@ -47,7 +47,6 @@ topology:
       exec:
         - hostname tofino
         - bash -c "$PROJ_DIR/config_ssh.sh"
-        # - bash -c "cp $IMAGE_PROJ_DIR/farreach/switchos $PROJ_DIR/farreach"
         - bash -c "cd $PROJ_DIR && bash scripts/local/configure_switchos.sh"
         - sleep 20
         - bash -ic "nohup python3.8 -u $PROJ_DIR/tofino_veth_fwder.py &> $PROJ_DIR/log/tofino_veth_fwder.log &"

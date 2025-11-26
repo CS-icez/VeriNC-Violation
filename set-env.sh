@@ -1,37 +1,8 @@
-PROJ_DIR=~/myrepo/verinc-farreach
-
-function build_cs_base() {
-    cd $PROJ_DIR
-    docker build -f client-server-base.dockerfile -t farreach-client-server:base .
-    cd -
-}
-
-function build_cs_dev() {
-    cd $PROJ_DIR
-    docker build -f client-server-dev.dockerfile -t farreach-client-server:dev .
-    cd -
-}
-
-function build_cs_latest() {
-    cd $PROJ_DIR
-    docker build -f client-server-latest.dockerfile -t farreach-client-server:latest .
-    cd -
-}
-
-function build_tofino_dev() {
-    cd $PROJ_DIR
-    docker build -f tofino-dev.dockerfile -t farreach-tofino:dev .
-    cd -
-}
-
-function build_tofino_latest() {
-    cd $PROJ_DIR
-    docker build -f tofino-latest.dockerfile -t farreach-tofino:latest .
-    cd -
+function build_docker() {
+    docker build -f client-server.dockerfile -t farreach-client-server:latest .
+    docker build -f tofino.dockerfile -t farreach-tofino:latest .
 }
 
 function update_config() {
-    cd $PROJ_DIR
     bash scripts/local/update_config_files.sh
-    cd -
 }
