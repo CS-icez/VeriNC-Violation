@@ -69,7 +69,7 @@ def print_pkt(pkt: bytes):
 
 def log_recv_pkt(pkt: bytes, in_if: str):
     log('RECV', f'[{rel_time_str()}]Packet received from {in_if}: op={get_op_name(pkt)}')
-    # print_pkt(pkt)
+    print_pkt(pkt)
 
 def process_pkt(pkt: bytes, in_if: str):
     global start_time_ns
@@ -108,6 +108,12 @@ class OpCode(Enum):
     SETVALID_INSWITCH_ACK  = 0x0110
     CACHE_POP_INSWITCH     = 0x007f
     CACHE_POP_INSWITCH_ACK = 0x0070
+    NETCACHE_PUTREQ_SEQ_CACHED      = 0x0043
+    NETCACHE_VALUEUPDATE            = 0x003b
+    NETCACHE_VALUEUPDATE_ACK        = 0x0190
+    NETCACHE_WARMUPREQ_INSWITCH_POP = 0x0074
+    PUTRES = 0x0008
+    GETRES = 0x0009
 
 def get_op(pkt: bytes) -> int:
     return (pkt[42] << 8) | pkt[43]

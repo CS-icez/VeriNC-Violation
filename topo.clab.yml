@@ -30,7 +30,7 @@ topology:
           cat set-tofino-env.sh >> /root/.bashrc
           echo source $PROJ_DIR/scripts/global.sh >> /root/.bashrc
           source /root/.bashrc
-          cp netcache-p4-build/netbufferv4.conf $SDE_INSTALL/share/p4/targets/tofino
+          cp netcache-p4-build/netcache.conf $SDE_INSTALL/share/p4/targets/tofino
           cp nocache-p4-build/nocache_16.conf $SDE_INSTALL/share/p4/targets/tofino
           rm model*.log bf_drivers.log*
           rm $SDE_INSTALL/lib/libpltfm_mgr.so
