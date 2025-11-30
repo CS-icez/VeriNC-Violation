@@ -78,19 +78,19 @@ def process_pkt(pkt: bytes, in_if: str):
         return
     elif start_time_ns == -1:
         start_time_ns = time.time_ns()
-    if in_if == 'veth-server0':
-        process_server0(pkt, in_if)
-    elif in_if == 'veth-client0':
-        process_client0(pkt, in_if)
-    elif in_if == 'veth-client1':
-        process_client1(pkt, in_if)
-    elif in_if == 'veth-tofino8':
-        process_tofino8(pkt, in_if)
-    else:
-        log_recv_pkt(pkt, in_if)
-        out_if = out_if_map[in_if]
-        sockets[out_if].send(pkt)
-        log('SEND', f'Forwarding packet from {in_if} to {out_if}')
+    # if in_if == 'veth-server0':
+    #     process_server0(pkt, in_if)
+    # elif in_if == 'veth-client0':
+    #     process_client0(pkt, in_if)
+    # elif in_if == 'veth-client1':
+    #     process_client1(pkt, in_if)
+    # elif in_if == 'veth-tofino8':
+    #     process_tofino8(pkt, in_if)
+    # else:
+    log_recv_pkt(pkt, in_if)
+    out_if = out_if_map[in_if]
+    sockets[out_if].send(pkt)
+    log('SEND', f'Forwarding packet from {in_if} to {out_if}')
 
 class OpCode(Enum):
     PUTREQ                 = 0x0001

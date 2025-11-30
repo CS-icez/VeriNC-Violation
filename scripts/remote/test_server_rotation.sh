@@ -11,8 +11,8 @@ fi
 
 ##### Part 0 #####
 echo "[part 0] clean up server storages"
-ssh ${USER}@${SERVER0} "rm -r /tmp/${DIRNAME}/*"
-ssh ${USER}@${SERVER1} "rm -r /tmp/${DIRNAME}/*"
+ssh ${USER}@${SERVER0} "rm -rf /tmp/${DIRNAME}/*"
+ssh ${USER}@${SERVER1} "rm -rf /tmp/${DIRNAME}/*"
 
 if [[ ${with_controller} -eq 1 ]]; then
 	# NOTE: if w/ in-switch cache, finish warmup phase by launching servers of correpsonding method + warmup_client + stopping servers

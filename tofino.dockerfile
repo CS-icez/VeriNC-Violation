@@ -7,7 +7,7 @@ RUN mkdir -p /tmp /run && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-WORKDIR /opt/farreach
+WORKDIR /opt/netcache
 COPY . .
 RUN bash docker_firstcompile_tofino.sh
 

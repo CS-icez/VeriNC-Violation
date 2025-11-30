@@ -19,7 +19,7 @@ benchmarkdist/.ycsb
 
 !ports.json
 README_CN.md
-clab-farreach/
+clab-netcache/
 *-p4-build/
 pcap_output/
 zlog-cfg-cur

@@ -1,4 +1,4 @@
-name: farreach
+name: netcache
 
 topology:
   nodes:
@@ -7,40 +7,40 @@ topology:
       image: dpdk:v21.11.4
       mgmt-ipv4: 172.20.20.200
       binds:
-        - ~/myrepo/verinc-farreach:/root/farreach
+        - ~/myrepo/verinc-netcache:/root/netcache
       env:
-        PROJ_DIR: /root/farreach
+        PROJ_DIR: /root/netcache
       cmd: sleep infinity
       exec:
         - bash -c "nohup python3 -u $PROJ_DIR/proxy.py &> $PROJ_DIR/log/proxy.log &"
 
     tofino: # Leaf switch bf3.
       kind: linux
-      image: farreach-tofino:latest
+      image: netcache-tofino:latest
       mgmt-ipv4: 172.20.20.100
       binds:
         - /dev/hugepages:/mnt/huge
-        - ~/myrepo/verinc-farreach:/root/farreach
+        - ~/myrepo/verinc-netcache:/root/netcache
       env:
-        PROJ_DIR: /opt/farreach
-        LOG_DIR: /root/farreach/log
+        PROJ_DIR: /opt/netcache
+        LOG_DIR: /root/netcache/log
       cmd: |
           bash -ic "
           cd $PROJ_DIR
           cat set-tofino-env.sh >> /root/.bashrc
           echo source $PROJ_DIR/scripts/global.sh >> /root/.bashrc
           source /root/.bashrc
-          cp farreach-p4-build/netbufferv4.conf $SDE_INSTALL/share/p4/targets/tofino
+          cp netcache-p4-build/netbufferv4.conf $SDE_INSTALL/share/p4/targets/tofino
           cp nocache-p4-build/nocache_16.conf $SDE_INSTALL/share/p4/targets/tofino
           rm model*.log bf_drivers.log*
           rm $SDE_INSTALL/lib/libpltfm_mgr.so
           $SDE_INSTALL/bin/veth_setup.sh 300
-          program_name=netbufferv4
+          program_name=netcache
           $SDE/run_tofino_model.sh -f ports.json -p $program_name &> $LOG_DIR/tofino_model.log &
           sleep 3
           $SDE/run_switchd.sh -p $program_name &> $LOG_DIR/switchd.log &
           sleep 15
-          cd farreach
+          cd netcache
           bash localscripts/launchswitchostestbed.sh
           sleep infinity
           "
@@ -49,62 +49,62 @@ topology:
         - bash -c "$PROJ_DIR/config_ssh.sh"
         - bash -c "cd $PROJ_DIR && bash scripts/local/configure_switchos.sh"
         - sleep 20
-        - bash -ic "nohup python3.8 -u $PROJ_DIR/tofino_veth_fwder.py &> $PROJ_DIR/log/tofino_veth_fwder.log &"
+        - bash -ic "nohup python3.8 -u $PROJ_DIR/tofino_veth_fwder.py &> $LOG_DIR/tofino_veth_fwder.log &"
 
     client0: # Main client dl11.
       kind: linux
-      image: farreach-client-server:latest
+      image: netcache-client-server:latest
       mgmt-ipv4: 172.20.20.11
       binds:
         - /dev/hugepages:/mnt/huge
-        - ~/myrepo/verinc-farreach:/root/farreach
+        - ~/myrepo/verinc-netcache:/root/netcache
       env:
-        PROJ_DIR: /opt/farreach
-        LOG_DIR: /root/farreach/log
-      cmd: bash -c "cat /opt/farreach/set-client-env.sh >> /root/.bashrc && sleep infinity"
+        PROJ_DIR: /opt/netcache
+        LOG_DIR: /root/netcache/log
+      cmd: bash -c "cat /opt/netcache/set-client-env.sh >> /root/.bashrc && sleep infinity"
       exec:
         - hostname client0
         - ip link set dev veth address 3c:fd:fe:bb:ca:78 # Containerlab: docker run -> veth pairs -> docker exec.
         - ip addr add 10.0.1.11/24 dev veth
         - bash -c "$PROJ_DIR/config_ssh.sh"
         - bash -c "cd $PROJ_DIR && bash scripts/local/configure_client.sh 0"
-        - sleep 30
-        - bash -c "cd $PROJ_DIR && bash scripts/remote/test_server_rotation.sh &> $LOG_DIR/server_rotation.log"
+        # - sleep 30
+        # - bash -c "cd $PROJ_DIR && bash scripts/remote/test_server_rotation.sh &> $LOG_DIR/server_rotation.log"
 
     client1: # Secondary client dl20.
       kind: linux
-      image: farreach-client-server:latest
+      image: netcache-client-server:latest
       mgmt-ipv4: 172.20.20.12
       binds:
         - /dev/hugepages:/mnt/huge
-        - ~/myrepo/verinc-farreach:/root/farreach
+        - ~/myrepo/verinc-netcache:/root/netcache
       env:
-        PROJ_DIR: /opt/farreach
-        LOG_DIR: /root/farreach/log
-      cmd: bash -c "cat /opt/farreach/set-client-env.sh >> /root/.bashrc && sleep infinity"
+        PROJ_DIR: /opt/netcache
+        LOG_DIR: /root/netcache/log
+      cmd: bash -c "cat /opt/netcache/set-client-env.sh >> /root/.bashrc && sleep infinity"
       exec:
         - hostname client1
         - ip link set dev veth address 9c:69:b4:60:34:f4
         - ip addr add 10.0.1.12/24 dev veth
         - bash -c "$PROJ_DIR/config_ssh.sh"
         - bash -c "cd $PROJ_DIR && bash scripts/local/configure_client.sh 1"
-        - bash -c "cd $PROJ_DIR/benchmark/output/violation-pregeneration && mv -f logicalclient-1.out logicalclient-0.out"
-        - sleep 200
-        - bash -c "cat $PROJ_DIR/benchmark/ycsb/tmp_serverrotation_part1_client.out >> $LOG_DIR/server_rotation.log"
-        - bash -c "grep -P '^\\[\\d+\\]' $LOG_DIR/server_rotation.log | sort -t'[' -k2,2n > $LOG_DIR/violation.log"
+        # - bash -c "cd $PROJ_DIR/benchmark/output/violation-pregeneration && mv -f logicalclient-1.out logicalclient-0.out"
+        # - sleep 200
+        # - bash -c "cat $PROJ_DIR/benchmark/ycsb/tmp_serverrotation_part1_client.out >> $LOG_DIR/server_rotation.log"
+        # - bash -c "grep -P '^\\[\\d+\\]' $LOG_DIR/server_rotation.log | sort -t'[' -k2,2n > $LOG_DIR/violation.log"
 
     server0: # Server 0 dl21.
       kind: linux
-      image: farreach-client-server:latest
+      image: netcache-client-server:latest
       mgmt-ipv4: 172.20.20.13
       binds:
         - /dev/hugepages:/mnt/huge
-        - ~/myrepo/verinc-farreach:/root/farreach
-        - ~/myrepo/verinc-farreach/db/server0:/tmp
+        - ~/myrepo/verinc-netcache:/root/netcache
+        - ~/myrepo/verinc-netcache/db/server0:/tmp
       env:
-        PROJ_DIR: /opt/farreach
-        LOG_DIR: /root/farreach/log
-      cmd: bash -c "cat /opt/farreach/set-server-env.sh >> /root/.bashrc && sleep infinity"
+        PROJ_DIR: /opt/netcache
+        LOG_DIR: /root/netcache/log
+      cmd: bash -c "cat /opt/netcache/set-server-env.sh >> /root/.bashrc && sleep infinity"
       exec:
         - hostname server0
         - ip link set dev veth address 9c:69:b4:60:34:e1
@@ -114,15 +114,15 @@ topology:
 
     server1: # Server 1 dl30.
       kind: linux
-      image: farreach-client-server:latest
+      image: netcache-client-server:latest
       mgmt-ipv4: 172.20.20.14
       binds:
         - /dev/hugepages:/mnt/huge
-        - ~/myrepo/verinc-farreach:/root/farreach
-        - ~/myrepo/verinc-farreach/db/server1:/tmp
+        - ~/myrepo/verinc-netcache:/root/netcache
+        - ~/myrepo/verinc-netcache/db/server1:/tmp
       env:
-        PROJ_DIR: /opt/farreach
-      cmd: bash -c "cat /opt/farreach/set-server-env.sh >> /root/.bashrc && sleep infinity"
+        PROJ_DIR: /opt/netcache
+      cmd: bash -c "cat /opt/netcache/set-server-env.sh >> /root/.bashrc && sleep infinity"
       exec:
         - hostname server1
         - ip link set dev veth address 9c:69:b4:60:ef:c1

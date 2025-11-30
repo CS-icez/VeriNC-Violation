@@ -33,8 +33,8 @@ ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 ENV PATH="$JAVA_HOME/bin:$PATH"
 
 # Prepare project directory
-RUN mkdir -p /opt/farreach
-WORKDIR /opt/farreach
+RUN mkdir -p /opt/netcache
+WORKDIR /opt/netcache
 COPY . .
 
 # Python dependencies
@@ -47,11 +47,11 @@ RUN mkdir -p /opt/deps && cd /opt/deps \
     && cd boost-1.81.0 \
     && ./bootstrap.sh --with-libraries=system,thread --prefix=/opt/deps/boost_1_81_0/install \
     && ./b2 -j"$(nproc)" install
-RUN ln -s /opt/deps/boost_1_81_0 /opt/farreach/boost_1_81_0
+RUN ln -s /opt/deps/boost_1_81_0 /opt/netcache/boost_1_81_0
 ENV BOOST_ROOT=/opt/deps/boost_1_81_0/install
 
 # Build RocksDB static library from source
-WORKDIR /opt/farreach/rocksdb-6.22.1
+WORKDIR /opt/netcache/rocksdb-6.22.1
 
 RUN PORTABLE=1 make static_lib -j"$(nproc)" \
     && rm -rf .git
@@ -60,7 +60,7 @@ RUN PORTABLE=1 make static_lib -j"$(nproc)" \
 RUN mkdir -p /tmp/farreach /tmp/nocache /tmp/netcache
 
 # Reset default working directory to project root
-WORKDIR /opt/farreach
+WORKDIR /opt/netcache
 
 # Set root password
 RUN echo 'root:root' | chpasswd
