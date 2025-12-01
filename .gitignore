@@ -5,3 +5,5 @@ log
 *.o
 app
 .DS_Store
+
+/p4-build/

@@ -232,7 +232,7 @@ control AppIdSeq(
             atp_ack.apply(p4ml, ig_intr_md, ig_intr_md_for_tm, mdata, p4ml_agtr_index);
         }else{
             if(p4ml.overflow == 1){
-                route.apply(hdr,ig_intr_md, ig_intr_md_for_dprsr, ig_intr_md_for_tm, p4ml.dataIndex,mdata.isMyAppIDandMyCurrentSeq);
+                route.apply(hdr,ig_intr_md, ig_intr_md_for_dprsr, ig_intr_md_for_tm, p4ml.dataIndex);
             }else{
 
                 if(p4ml.isResend == 1){
@@ -267,14 +267,14 @@ control AppIdSeq(
                     if (mdata.isAggregate != 0) {
                         if (mdata.agtr_time == p4ml.agtr_time) {
                             modify_packet_bitmap_table.apply();
-                            route.apply(hdr,ig_intr_md, ig_intr_md_for_dprsr, ig_intr_md_for_tm, p4ml.dataIndex, mdata.isMyAppIDandMyCurrentSeq);
+                            route.apply(hdr,ig_intr_md, ig_intr_md_for_dprsr, ig_intr_md_for_tm, p4ml.dataIndex);
                         } else { 
                             drop_pkt();
                         }
                     } else {
                         if (mdata.agtr_time == p4ml.agtr_time) {
                             modify_packet_bitmap_table.apply();
-                            route.apply(hdr, ig_intr_md, ig_intr_md_for_dprsr, ig_intr_md_for_tm, p4ml.dataIndex, mdata.isMyAppIDandMyCurrentSeq);
+                            route.apply(hdr, ig_intr_md, ig_intr_md_for_dprsr, ig_intr_md_for_tm, p4ml.dataIndex);
                         } else {
                             // route.apply(hdr,ig_intr_md, ig_intr_md_for_dprsr, ig_intr_md_for_tm, p4ml.dataIndex);
                         }    
@@ -286,7 +286,7 @@ control AppIdSeq(
                     if (p4ml.isResend == 0) {
                         tag_collision_incoming();
                     }
-                    route.apply(hdr, ig_intr_md, ig_intr_md_for_dprsr, ig_intr_md_for_tm, p4ml.dataIndex, mdata.isMyAppIDandMyCurrentSeq);
+                    route.apply(hdr, ig_intr_md, ig_intr_md_for_dprsr, ig_intr_md_for_tm, p4ml.dataIndex);
 
                 }
             }
