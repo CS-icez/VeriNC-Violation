@@ -7,3 +7,4 @@ app
 .DS_Store
 
 /p4-build/
+/clab-atp/

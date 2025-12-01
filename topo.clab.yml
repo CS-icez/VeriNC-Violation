@@ -1,0 +1,102 @@
+name: atp
+
+topology:
+  nodes:
+    proxy:
+      kind: linux
+      image: dpdk:v21.11.4
+      mgmt-ipv4: 172.20.20.200
+      binds:
+        - ~/myrepo/verinc-atp:/root/atp
+      cmd: sleep infinity
+      exec:
+        - bash -c "nohup python3 -u /root/atp/proxy.py &> /root/atp/log/proxy.log &"
+
+    tofino:
+      kind: linux
+      image: tofino:20251025
+      mgmt-ipv4: 172.20.20.100
+      binds:
+        - /dev/hugepages:/mnt/huge
+        - ~/myrepo/verinc-atp:/root/bty/atp
+      env:
+        PROJ_DIR: /root/bty/atp
+      cmd: |
+          bash -ic "
+          mkdir -p /tmp
+          cd $PROJ_DIR
+          cat set-tofino-env.sh >> /root/.bashrc
+          source /root/.bashrc
+          cp dev_root/p4-build/p4ml16.conf $SDE_INSTALL/share/p4/targets/tofino
+          rm model*.log bf_drivers.log*
+          rm $SDE_INSTALL/lib/libpltfm_mgr.so
+          # $SDE/run_tofino_model.sh -f ports.json -p p4ml16 &> log/tofino_model.log &
+          # sleep 3
+          # $SDE/run_switchd.sh -p p4ml16 &> log/switchd.log &
+          # sleep 18
+          # cd dev_root/controller
+          # python3.8 atp.py --bfrt-ip 172.20.20.100 --switch-ip 10.0.0.100 --log-level DEBUG &> ../../log/controller.log
+          sleep infinity
+          "
+      # exec:
+      #   - sleep 33
+
+    client1:
+      kind: linux
+      image: dpdk:v21.11.4
+      mgmt-ipv4: 172.20.20.11
+      binds:
+        - /dev/hugepages:/mnt/huge
+        - ~/myrepo/verinc-atp:/root/atp
+      env:
+        PROJ_DIR: /root/atp
+      cmd: sleep infinity
+      exec:
+        - bash -c "cat $PROJ_DIR/set-client-env.sh >> /root/.bashrc"
+      #   - hostname worker1
+      #   - ip link set dev veth address 00:11:22:33:44:55 # Containerlab: docker run -> veth pairs -> docker exec.
+      #   - sleep 35
+      #   - bash -ic "cd $PROJ_DIR/dev_root/build/bin && ./hello_world &> $PROJ_DIR/log/violation_worker1.log"
+
+    client2:
+      kind: linux
+      image: dpdk:v21.11.4
+      mgmt-ipv4: 172.20.20.12
+      binds:
+        - /dev/hugepages:/mnt/huge
+        - ~/myrepo/verinc-atp:/root/atp
+      env:
+        PROJ_DIR: /root/atp
+      cmd: sleep infinity
+      exec:
+        - bash -c "cat $PROJ_DIR/set-client-env.sh >> /root/.bashrc"
+      #   - hostname worker2
+      #   - ip link set dev veth address 00:11:22:33:44:66
+      #   - sleep 35
+      #   - bash -ic 'cd $PROJ_DIR/dev_root/build/bin && ./hello_world &> $PROJ_DIR/log/violation_worker2.log'
+
+    server:
+      kind: linux
+      image: dpdk:v21.11.4
+      mgmt-ipv4: 172.20.20.13
+      binds:
+        - /dev/hugepages:/mnt/huge
+        - ~/myrepo/verinc-atp:/root/atp
+      env:
+        PROJ_DIR: /root/atp
+      cmd: sleep infinity
+      exec:
+        - bash -c "cat $PROJ_DIR/set-server-env.sh >> /root/.bashrc"
+      #   - hostname server
+      #   - ip link set dev veth address 00:11:22:33:44:77
+      #   - sleep 35
+      #   - bash -ic 'cd $PROJ_DIR/dev_root/build/bin && ./hello_world &> $PROJ_DIR/log/violation_server.log'
+
+  links:
+    - endpoints: ["client1:veth", "proxy:veth-client1"]
+    - endpoints: ["client2:veth", "proxy:veth-client2"]
+    - endpoints: ["server:veth", "proxy:veth-server"]
+    - endpoints: ["tofino:veth0", "proxy:veth-tofino0"]
+    - endpoints: ["tofino:veth4", "proxy:veth-tofino4"]
+    - endpoints: ["tofino:veth8", "proxy:veth-tofino8"]
+    - endpoints: ["tofino:veth20", "proxy:veth-tofino20"]
