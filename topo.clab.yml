@@ -27,13 +27,15 @@ topology:
           cd $PROJ_DIR
           cat set-tofino-env.sh >> /root/.bashrc
           source /root/.bashrc
-          cp dev_root/p4-build/p4ml16.conf $SDE_INSTALL/share/p4/targets/tofino
+          cp p4-14-build/p4ml.conf $SDE_INSTALL/share/p4/targets/tofino
+          ln -s $PROJ_DIR/p4-14-build $SDE_INSTALL/share/tofinopd/p4ml
+          ln -s $PROJ_DIR/p4-14-build/lib $SDE_INSTALL/lib/tofinopd/p4ml
           rm model*.log bf_drivers.log*
           rm $SDE_INSTALL/lib/libpltfm_mgr.so
-          # $SDE/run_tofino_model.sh -f ports.json -p p4ml16 &> log/tofino_model.log &
-          # sleep 3
-          # $SDE/run_switchd.sh -p p4ml16 &> log/switchd.log &
-          # sleep 18
+          $SDE/run_tofino_model.sh -f ports.json -p p4ml &> log/tofino_model.log &
+          sleep 3
+          #$SDE/run_switchd.sh -p p4ml &> log/switchd.log &
+          sleep 18
           # cd dev_root/controller
           # python3.8 atp.py --bfrt-ip 172.20.20.100 --switch-ip 10.0.0.100 --log-level DEBUG &> ../../log/controller.log
           sleep infinity
@@ -46,7 +48,7 @@ topology:
       image: dpdk:v21.11.4
       mgmt-ipv4: 172.20.20.11
       binds:
-        - /dev/hugepages:/mnt/huge
+        # - /dev/hugepages:/mnt/huge
         - ~/myrepo/verinc-atp:/root/atp
       env:
         PROJ_DIR: /root/atp
@@ -63,7 +65,7 @@ topology:
       image: dpdk:v21.11.4
       mgmt-ipv4: 172.20.20.12
       binds:
-        - /dev/hugepages:/mnt/huge
+        # - /dev/hugepages:/mnt/huge
         - ~/myrepo/verinc-atp:/root/atp
       env:
         PROJ_DIR: /root/atp
@@ -80,7 +82,7 @@ topology:
       image: dpdk:v21.11.4
       mgmt-ipv4: 172.20.20.13
       binds:
-        - /dev/hugepages:/mnt/huge
+        # - /dev/hugepages:/mnt/huge
         - ~/myrepo/verinc-atp:/root/atp
       env:
         PROJ_DIR: /root/atp

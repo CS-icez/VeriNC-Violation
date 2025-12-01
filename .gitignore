@@ -7,4 +7,9 @@ app
 .DS_Store
 
 /p4-build/
+/p4-14-build/
 /clab-atp/
+zlog-cfg-cur
+bf_drivers.log
+model*.log
+/pcap_output/
