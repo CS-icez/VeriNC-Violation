@@ -18,13 +18,32 @@
 # 	rm *.o ../common/*.o
 # 	rm app
 
-all:
-	g++ -std=c++11 -g -O3 -c -o main.o main.cc
-	g++ -std=c++11 -g -O3 -c -o p4ml_manager.o p4ml_manager.cc  -mavx
-	g++ -std=c++11 -g -O3 -c -o ../common/HashTable.o ../common/HashTable.cc
-	g++ -std=c++11 -g -O3 -c -o ../common/dma_common.o ../common/dma_common.cc
-	g++ -std=c++11 -g -O3 -I../common/ -o app main.o p4ml_manager.o ../common/HashTable.o ../common/dma_common.o -lrdmacm -libverbs -lrt -lpthread  -lm 
+RDMA ?= 0
+CXX ?= g++
+CXXFLAGS := -std=c++11 -g -O3 -I../common/
+LDFLAGS := -lpthread -lrt -lm
+
+ifeq ($(RDMA),1)
+  CXXFLAGS += -DUSE_RDMA
+  LDFLAGS += -lrdmacm -libverbs
+endif
+
+all: app
+
+app: main.o p4ml_manager.o ../common/HashTable.o ../common/dma_common.o
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+main.o: main.cc
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+p4ml_manager.o: p4ml_manager.cc
+	$(CXX) $(CXXFLAGS) -mavx -c -o $@ $<
+
+../common/HashTable.o: ../common/HashTable.cc
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+../common/dma_common.o: ../common/dma_common.cc ../common/dma_common.h
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 clean:
-	rm *.o
-	rm app
+	rm -f *.o ../common/*.o app

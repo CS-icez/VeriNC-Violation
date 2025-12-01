@@ -115,7 +115,7 @@ void main_receive_packet_loop(DMAcontext* dma_context, int thread_id) {
             // std::chrono::high_resolution_clock::time_point packet_start = std::chrono::high_resolution_clock::now();
             uint8_t* buf = &dma_context->mp_recv_ring[dma_context->ring_head * kAppRingMbufSize];
 
-            agghdr* p4ml_header = reinterpret_cast<agghdr*>(buf + IP_ETH_UDP_HEADER_SIZE);
+            agghdr* p4ml_header = reinterpret_cast<agghdr*>(buf + P4ML_HEADER_OFFSET);
 
             //check ecn mark
             // bool is_ecn_mark_packet = p4ml_header->flag & 0x08;
@@ -416,7 +416,6 @@ void Start(int thread_id) {
     DMAcontext* dma_context;
     {
         std::lock_guard<std::mutex> lock(_dma_mutex);
-
         dma_context = DMA_create(ib_dev, thread_id + ((appID - 1) * MAX_THREAD_PER_APP), true);
         // dma_context->isSent = new bool[MAX_TENSOR_SIZE / MAX_ENTRIES_PER_PACKET + 1];
         // dma_context->send_time = new std::chrono::high_resolution_clock::time_point[MAX_TENSOR_SIZE / MAX_ENTRIES_PER_PACKET + 1];
@@ -442,17 +441,22 @@ int main(int argc, char *argv[]) {
     //     UsedSwitchAGTRcount = MAX_AGTR_COUNT;
     num_thread = 12;
 
+    ib_dev = nullptr;
+#ifdef USE_RDMA
     dev_list = ibv_get_device_list(NULL);
     if (!dev_list) {
         perror("Failed to get devices list");
         exit(1);
     }
-
     ib_dev = dev_list[1];
     if (!ib_dev) {
         fprintf(stderr, "IB device not found\n");
         exit(1);
     }
+    printf("Using RDMA device: %s\n", ibv_get_device_name(ib_dev));
+#else
+    printf("RDMA disabled. Using UDP socket transport.\n");
+#endif
 
     /* Init Thread */
     workQueue = new ThreadPool(num_thread, [](){});

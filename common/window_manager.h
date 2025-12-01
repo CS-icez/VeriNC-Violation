@@ -37,6 +37,7 @@ class WindowManager {
             last_ACK = 0;
             total_ACK = packet_total;
             memset(isACKed, 0, sizeof(bool) * packet_total + 1);
+            return 0;
         }
 };
 

@@ -108,7 +108,9 @@ double P4mlManager::GetLossRate()
         loss += p4ml_loss_packet[i];
         total += p4ml_total_packet[i];
     }
-    printf("Loss Rate: %lf\n", (double)loss / (double)total);
+    double loss_rate = (double)loss / (double)total;
+    printf("Loss Rate: %lf\n", loss_rate);
+    return loss_rate;
 }
 
 int P4mlManager::GetCollisionTimeAndClear()
@@ -266,7 +268,7 @@ void P4mlManager::main_receive_packet_loop(DMAcontext* dma_context,
             
             uint8_t* buf = &dma_context->mp_recv_ring[dma_context->ring_head * kAppRingMbufSize];
 
-            agghdr* p4ml_header = reinterpret_cast<agghdr*>(buf + IP_ETH_UDP_HEADER_SIZE);
+            agghdr* p4ml_header = reinterpret_cast<agghdr*>(buf + P4ML_HEADER_OFFSET);
             if (DEBUG_PRINT_ALL_RECEIVING_PACKET)
                 p4ml_header_print_h(p4ml_header, "RECEIVE");
 
@@ -283,6 +285,7 @@ void P4mlManager::main_receive_packet_loop(DMAcontext* dma_context,
                 dma_context->total_received--;
 
                 dma_context->ring_head = (dma_context->ring_head + 1) % kAppNumRingEntries;
+#ifdef USE_RDMA
                 dma_context->nb_rx_rolling++;
                 if (dma_context->nb_rx_rolling == kAppStridesPerWQE) {
                     dma_context->nb_rx_rolling = 0;
@@ -290,6 +293,7 @@ void P4mlManager::main_receive_packet_loop(DMAcontext* dma_context,
                     rt_assert(ret == 0);
                     dma_context->sge_idx = (dma_context->sge_idx + 1) % kAppRQDepth;
                 }
+#endif
                 continue;
             }
             // If that is duplicate resend packet, ignore it
@@ -617,19 +621,20 @@ void P4mlManager::init_threadPool(int num_thread)
         // printf("[%d] %d \n", i, hash_table->hash_map[i]);
     }
 
+    struct ibv_device* ib_dev = nullptr;
+#ifdef USE_RDMA
     struct ibv_device** dev_list;
-    struct ibv_device* ib_dev;
     dev_list = ibv_get_device_list(NULL);
     if (!dev_list) {
         perror("Failed to get devices list");
         exit(1);
     }
-
     ib_dev = dev_list[1];
     if (!ib_dev) {
         fprintf(stderr, "IB device not found\n");
         exit(1);
     }
+#endif
 
     for (int i = 0; i < num_thread; i++) {
         threadInfoQueue[i] = new ThreadInfo{
@@ -651,7 +656,11 @@ void P4mlManager::init_threadPool(int num_thread)
             dmaContextQueue[i]->isMarkTimeStamp = true;
     }
 
+    #ifdef USE_RDMA
     printf("using: %s\n", ibv_get_device_name(ib_dev));
+    #else
+    printf("RDMA disabled. Using UDP socket transport.\n");
+    #endif
 }
 
 void P4mlManager::PushPullLoop(int thread_id)
