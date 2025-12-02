@@ -61,6 +61,7 @@ void main_receive_packet_loop(DMAcontext* dma_context, int thread_id) {
         
         std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
         while(1) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
             // if (receive_byte_reset_flag[thread_id]) {
             //     receive_in_sec[thread_id] = 0;
@@ -412,7 +413,7 @@ void main_receive_packet_loop(DMAcontext* dma_context, int thread_id) {
 
 
 void Start(int thread_id) {
-    bindingCPU(thread_id + 16);
+    // bindingCPU(thread_id + 16);
     DMAcontext* dma_context;
     {
         std::lock_guard<std::mutex> lock(_dma_mutex);
@@ -429,7 +430,7 @@ void Start(int thread_id) {
 }
 
 int main(int argc, char *argv[]) {
-    bindingCPU(15);
+    // bindingCPU(15);
     srand(time(NULL));
     // num_thread = atoi(argv[1]);
 
@@ -439,7 +440,7 @@ int main(int argc, char *argv[]) {
     //     UsedSwitchAGTRcount = atoi(argv[1]);
     // else
     //     UsedSwitchAGTRcount = MAX_AGTR_COUNT;
-    num_thread = 12;
+    num_thread = 1;
 
     ib_dev = nullptr;
 #ifdef USE_RDMA

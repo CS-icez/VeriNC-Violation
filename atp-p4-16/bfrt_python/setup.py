@@ -1,6 +1,6 @@
 from ipaddress import ip_address
 
-p4 = bfrt.p4ml16.SwitchIngress
+p4 = bfrt.p4ml16.pipe.SwitchIngress
 # pre = p4.pre
 
 # print("clean appID_and_Seq")
@@ -73,9 +73,9 @@ p4 = bfrt.p4ml16.SwitchIngress
 SwitchIngress = p4
 modify_packet_bitmap_table = SwitchIngress.appid_seq.modify_packet_bitmap_table
 
-modify_packet_bitmap_table.add_with_modify_packet_bitmap(dataindex=1)
+modify_packet_bitmap_table.add_with_modify_packet_bitmap(dataIndex=1)
 
-modify_packet_bitmap_table.add_with_nop(dataindex=0)
+modify_packet_bitmap_table.add_with_nop(dataIndex=0)
 
 MAC_address_of_worker = [
                           "98:03:9b:59:b0:34"  # 11.238.201.138 -> eth4
@@ -105,18 +105,21 @@ loopback = [20]
 # multicast_node
 # pre.node.add(multicast_node_id=0, multicast_rid=0, multicast_lag_id=[], dev_port=worker)
 # pre.mgid.add(mgid=1, multicast_node_id=[0], multicast_node_l1_xid_valid=[False], multicast_node_l1_xid=[0])
+bfrt.pre.node.add(MULTICAST_NODE_ID=0, MULTICAST_RID=10, MULTICAST_LAG_ID=[], DEV_PORT=worker)
+bfrt.pre.mgid.add(MGID=999, MULTICAST_NODE_ID=[0], MULTICAST_NODE_L1_XID_VALID=[False], MULTICAST_NODE_L1_XID=[0])
 multicast_table = p4.appid_seq.atp_ack.multicast_table
-multicast_table.add_with_multicast(appidandseqnum=0x00010000, appidandseqnum_mask=0xFFFF0000, isack=1,mgid=999)
+multicast_table.add_with_multicast(appIDandSeqNum=0x00010000, appIDandSeqNum_mask=0xFFFF0000, isACK=1, mgid=999)
 
 # set loopPort
-bfrt.p4ml16.port.port.mod(port_enable=True,dev_port=20,loopback_mode="BF_LPBK_MAC_NEAR")
+# Configure loopback on dev_port 20
+bfrt.port.port.mod(PORT_ENABLE=True, DEV_PORT=20, LOOPBACK_MODE="BF_LPBK_MAC_NEAR")
 
 
 p4ml_dmac = p4.appid_seq.route.dmac
 # first send
-p4ml_dmac.add_with_dmac_forward(appidandseqnum=0x00010000,appidandseqnum_mask=0xFFFF0000,dataindex=1,ingress_port=loopback[0],port=ps[0])
+p4ml_dmac.add_with_dmac_forward(appIDandSeqNum=0x00010000, appIDandSeqNum_mask=0xFFFF0000, dataIndex=1, ingress_port=loopback[0], port=ps[0])
 for workerPort in worker:
-    p4ml_dmac.add_with_dmac_forward_and_set_dataIndex(appidandseqnum=0x00010000,appidandseqnum_mask=0xFFFF0000,dataindex=0,ingress_port=workerPort, port=loopback[0])
+    p4ml_dmac.add_with_dmac_forward_and_set_dataIndex(appIDandSeqNum=0x00010000, appIDandSeqNum_mask=0xFFFF0000, dataIndex=0, ingress_port=workerPort, port=loopback[0])
 
 
 

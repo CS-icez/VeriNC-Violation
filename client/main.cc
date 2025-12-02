@@ -41,7 +41,7 @@ std::shared_ptr<P4mlManager> _p4ml_manager;
 
 int main(int argc, char *argv[])
 {
-    bindingCPU(0);
+    // bindingCPU(0);
 
     if (argc < 5) {
         printf("\nUsage %s [MyID] [Num of Worker] [AppID] [Num of PS]\n\n", argv[0]);
@@ -61,9 +61,9 @@ int main(int argc, char *argv[])
     
     /* Here for int size to send per thread */
     /* ex. 25600 = 32*800 = 1 Round */
-    int size = 1024000;
-    int thread_to_use = 12;
-    int loop_time = 1000;
+    int size = MAX_ENTRIES_PER_PACKET;
+    int thread_to_use = 1;
+    int loop_time = 1;
 
     if (argc > 5) {
         std::string option = argv[5];

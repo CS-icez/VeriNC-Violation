@@ -9,8 +9,8 @@ echo "Client/Server project directory set to: $CS_PROJ_DIR"
 
 function compile_p4() {
     docker run -it --rm -v $PROJ_DIR:$TOFINO_PROJ_DIR tofino:20251025 bash -ic " \
-        bf-p4c --verbose 3 -g -x p4-14 -a tna -b tofino --program-name p4ml \
-            -o $TOFINO_PROJ_DIR/p4-14-build $TOFINO_PROJ_DIR/p4src/p4ml.p4 \
+        bf-p4c --verbose 3 -g -a tna -b tofino --program-name p4ml16 \
+            -o $TOFINO_PROJ_DIR/p4-16-build $TOFINO_PROJ_DIR/atp-p4-16/main.p4 \
     "
 }
 

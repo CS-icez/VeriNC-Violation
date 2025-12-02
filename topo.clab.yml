@@ -27,23 +27,21 @@ topology:
           cd $PROJ_DIR
           cat set-tofino-env.sh >> /root/.bashrc
           source /root/.bashrc
-          cp p4-14-build/p4ml.conf $SDE_INSTALL/share/p4/targets/tofino
-          ln -s $PROJ_DIR/p4-14-build $SDE_INSTALL/share/tofinopd/p4ml
-          ln -s $PROJ_DIR/p4-14-build/lib $SDE_INSTALL/lib/tofinopd/p4ml
+          program_name=p4ml16
+          cp p4-16-build/$program_name.conf $SDE_INSTALL/share/p4/targets/tofino
           rm model*.log bf_drivers.log*
           rm $SDE_INSTALL/lib/libpltfm_mgr.so
-          $SDE/run_tofino_model.sh -f ports.json -p p4ml &> log/tofino_model.log &
+          $SDE/run_tofino_model.sh -f ports.json -p $program_name &> log/tofino_model.log &
           sleep 3
-          #$SDE/run_switchd.sh -p p4ml &> log/switchd.log &
-          sleep 18
-          # cd dev_root/controller
-          # python3.8 atp.py --bfrt-ip 172.20.20.100 --switch-ip 10.0.0.100 --log-level DEBUG &> ../../log/controller.log
+          $SDE/run_switchd.sh -p $program_name &> log/switchd.log &
+          # sleep 18
+          $SDE/run_bfshell.sh -b $PROJ_DIR/atp-p4-16/bfrt_python/setup.py &> log/bfrt_setup.log
           sleep infinity
           "
-      # exec:
-      #   - sleep 33
+      exec:
+        - sleep 18
 
-    client1:
+    client0:
       kind: linux
       image: dpdk:v21.11.4
       mgmt-ipv4: 172.20.20.11
@@ -55,12 +53,12 @@ topology:
       cmd: sleep infinity
       exec:
         - bash -c "cat $PROJ_DIR/set-client-env.sh >> /root/.bashrc"
-      #   - hostname worker1
+        - hostname client0
       #   - ip link set dev veth address 00:11:22:33:44:55 # Containerlab: docker run -> veth pairs -> docker exec.
       #   - sleep 35
       #   - bash -ic "cd $PROJ_DIR/dev_root/build/bin && ./hello_world &> $PROJ_DIR/log/violation_worker1.log"
 
-    client2:
+    client1:
       kind: linux
       image: dpdk:v21.11.4
       mgmt-ipv4: 172.20.20.12
@@ -72,7 +70,7 @@ topology:
       cmd: sleep infinity
       exec:
         - bash -c "cat $PROJ_DIR/set-client-env.sh >> /root/.bashrc"
-      #   - hostname worker2
+        - hostname client1
       #   - ip link set dev veth address 00:11:22:33:44:66
       #   - sleep 35
       #   - bash -ic 'cd $PROJ_DIR/dev_root/build/bin && ./hello_world &> $PROJ_DIR/log/violation_worker2.log'
@@ -95,8 +93,8 @@ topology:
       #   - bash -ic 'cd $PROJ_DIR/dev_root/build/bin && ./hello_world &> $PROJ_DIR/log/violation_server.log'
 
   links:
+    - endpoints: ["client0:veth", "proxy:veth-client0"]
     - endpoints: ["client1:veth", "proxy:veth-client1"]
-    - endpoints: ["client2:veth", "proxy:veth-client2"]
     - endpoints: ["server:veth", "proxy:veth-server"]
     - endpoints: ["tofino:veth0", "proxy:veth-tofino0"]
     - endpoints: ["tofino:veth4", "proxy:veth-tofino4"]

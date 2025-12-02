@@ -25,6 +25,7 @@ Environment variables allow basic addressing without code changes:
 - `P4ML_SERVER_IP`: IP address of the parameter server (set in client containers)
 - `P4ML_CLIENT_IP`: IP address of a client (set in server container if needed for replies)
 - `P4ML_BASE_PORT`: Base UDP port (default 6000). Each thread uses `base + thread_id`.
+- `P4ML_UDP_IFACE`: Network interface to bind UDP sockets, by default `veth`.
 
 Example (single client and server on same host/network):
 
@@ -45,6 +46,7 @@ make -C client
 
 - The fallback focuses on compilation and functional API compatibility, not performance parity.
 - Further tuning (batching, pacing, reliability) can be added incrementally without changing higher-level logic.
+
 # ATP
 
 ATP is a service that performs multi-rack multi-tenant in-network aggregation via co-designing with programmable switch and end-host networking stack.

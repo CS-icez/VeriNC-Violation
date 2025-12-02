@@ -119,6 +119,7 @@ def is_op(pkt: bytes, op_code: OpCode) -> bool:
     return get_op(pkt) == op_code.value
 
 def get_op_name(pkt: bytes) -> str:
+    return 'OP_PLACEHOLDER'
     op = get_op(pkt)
     try:
         return OpCode(op).name

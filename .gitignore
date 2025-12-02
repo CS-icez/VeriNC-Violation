@@ -8,6 +8,7 @@ app
 
 /p4-build/
 /p4-14-build/
+/p4-16-build/
 /clab-atp/
 zlog-cfg-cur
 bf_drivers.log

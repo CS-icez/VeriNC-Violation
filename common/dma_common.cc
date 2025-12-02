@@ -566,6 +566,21 @@ DMAcontext* DMA_create(struct ibv_device* /*ib_dev*/, int thread_id, bool isPS)
     int flags = fcntl(sockfd, F_GETFL, 0);
     fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
 
+    // Bind the socket to a specific interface (by default "veth")
+    // Provide interface name via env var P4ML_UDP_IFACE (e.g., "veth0").
+    // Requires CAP_NET_RAW/root inside the container/host.
+    const char* iface_env = getenv("P4ML_UDP_IFACE");
+    const char* iface_default = "veth";
+    const char* iface = iface_env ? iface_env : iface_default;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE, iface, strlen(iface) + 1) != 0) {
+        perror("setsockopt(SO_BINDTODEVICE)");
+        if (!iface_env) {
+            fprintf(stderr, "[UDP] Failed to bind to default interface '%s'\n", iface_default);
+        }
+    } else {
+        fprintf(stderr, "[UDP] Bound socket to device '%s'\n", iface);
+    }
+
     const char* base_port_env = getenv("P4ML_BASE_PORT");
     int base_port = base_port_env ? atoi(base_port_env) : 6000;
 
