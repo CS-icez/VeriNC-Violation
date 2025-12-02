@@ -133,6 +133,18 @@ void main_receive_packet_loop(DMAcontext* dma_context, int thread_id) {
             p4ml_header_ntoh(p4ml_header);
             /* Move AppID index */
             int appID = p4ml_header->appID;
+
+            bool header_ok = true;
+            if (appID <= 0 || appID > MAX_APP_PER_THREAD) header_ok = false;
+            if (p4ml_header->len_tensor > MAX_TENSOR_SIZE) header_ok = false;
+            if (p4ml_header->num_worker == 0 || p4ml_header->num_worker > MAX_WORKER) header_ok = false;
+
+            if (!header_ok) {
+                // Drop and advance ring safely
+                dma_postback(dma_context);
+                continue;
+            }
+
             if (!app_init[appID]) {
                 app_init[appID] = true;
             } else {
