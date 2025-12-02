@@ -659,7 +659,7 @@ void P4mlManager::init_threadPool(int num_thread)
     #ifdef USE_RDMA
     printf("using: %s\n", ibv_get_device_name(ib_dev));
     #else
-    printf("RDMA disabled. Using UDP socket transport.\n");
+    printf("RDMA disabled. Using DPDK transport.\n");
     #endif
 }
 

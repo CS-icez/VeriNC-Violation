@@ -456,7 +456,7 @@ int main(int argc, char *argv[]) {
     }
     printf("Using RDMA device: %s\n", ibv_get_device_name(ib_dev));
 #else
-    printf("RDMA disabled. Using UDP socket transport.\n");
+    printf("RDMA disabled. Using DPDK transport.\n");
 #endif
 
     /* Init Thread */

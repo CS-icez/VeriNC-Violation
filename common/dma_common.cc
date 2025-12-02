@@ -546,11 +546,96 @@ size_t get_cycle_delta(const cqe_snapshot_t& prev, const cqe_snapshot_t& cur)
 
     return ((cur_idx + kAppCQESnapshotCycle) - prev_idx) % kAppCQESnapshotCycle;
 }
-#else // USE_RDMA SOCKET FALLBACK
+#elif defined(USE_DPDK)
 
-// Minimal DMA_create using UDP sockets. Each thread gets its own port.
+#include <atomic>
+#include <cstring>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <algorithm>
+
+static std::atomic<bool> g_dpdk_inited{false};
+static std::atomic<uint16_t> g_dpdk_port_inited{UINT16_MAX};
+static rte_mempool* g_dpdk_mempool = nullptr;
+
+static void dpdk_die(const char* msg) {
+    fprintf(stderr, "[DPDK] %s\n", msg);
+    exit(1);
+}
+
+static std::vector<char*> split_args(const char* args_env) {
+    std::vector<char*> argv;
+    if (!args_env) return argv;
+    std::string s(args_env);
+    std::stringstream ss(s);
+    std::string tok;
+    static std::vector<std::string> keep; // to keep storage
+    keep.clear();
+    while (ss >> tok) keep.push_back(tok);
+    for (auto& k : keep) argv.push_back(const_cast<char*>(k.c_str()));
+    return argv;
+}
+
+static void dpdk_global_init()
+{
+    bool expected = false;
+    if (!g_dpdk_inited.compare_exchange_strong(expected, true)) return; // already init
+
+    const char* env = getenv("DPDK_EAL_ARGS");
+    std::vector<char*> extra = split_args(env);
+    std::vector<char*> argv;
+    argv.push_back(const_cast<char*>("verinc-atp"));
+    for (auto* p : extra) argv.push_back(p);
+    int argc = (int)argv.size();
+    if (rte_eal_init(argc, argv.data()) < 0) {
+        dpdk_die("Failed to rte_eal_init. Set DPDK_EAL_ARGS.");
+    }
+
+    uint16_t nb_ports = rte_eth_dev_count_avail();
+    if (nb_ports == 0) dpdk_die("No DPDK ports available.");
+
+    // Pick port 0 by default; allow override via DPDK_PORT_ID
+    uint16_t port_id = 0;
+    if (const char* p = getenv("DPDK_PORT_ID")) port_id = (uint16_t)atoi(p);
+    if (port_id >= nb_ports) dpdk_die("Invalid DPDK_PORT_ID.");
+
+    // Configure device if not configured yet
+    if (g_dpdk_port_inited.load() == UINT16_MAX) {
+        const uint16_t rx_rings = 1, tx_rings = 1;
+        rte_eth_conf port_conf{};
+        port_conf.rxmode.mq_mode = ETH_MQ_RX_NONE;
+
+        int ret = rte_eth_dev_configure(port_id, rx_rings, tx_rings, &port_conf);
+        if (ret < 0) dpdk_die("rte_eth_dev_configure failed");
+
+        // Create a global mbuf pool
+        unsigned nb_mbuf = 8192;
+        g_dpdk_mempool = rte_pktmbuf_pool_create("MBUF_POOL", nb_mbuf, 256, 0,
+                                                 RTE_MBUF_DEFAULT_BUF_SIZE, rte_socket_id());
+        if (!g_dpdk_mempool) dpdk_die("pktmbuf_pool_create failed");
+
+        // RX queue
+        ret = rte_eth_rx_queue_setup(port_id, 0, 1024, rte_eth_dev_socket_id(port_id), nullptr, g_dpdk_mempool);
+        if (ret < 0) dpdk_die("rx_queue_setup failed");
+
+        // TX queue
+        ret = rte_eth_tx_queue_setup(port_id, 0, 1024, rte_eth_dev_socket_id(port_id), nullptr);
+        if (ret < 0) dpdk_die("tx_queue_setup failed");
+
+        ret = rte_eth_dev_start(port_id);
+        if (ret < 0) dpdk_die("eth_dev_start failed");
+
+        rte_eth_promiscuous_enable(port_id);
+        g_dpdk_port_inited.store(port_id);
+    }
+}
+
+// Minimal DMA_create using DPDK. Single shared port, single queue per direction.
 DMAcontext* DMA_create(struct ibv_device* /*ib_dev*/, int thread_id, bool isPS)
 {
+    dpdk_global_init();
+
     // Allocate send region (layers only) and recv ring.
     int send_buf_size = P4ML_LAYER_SIZE * my_send_queue_length;
     void* send_buf = malloc(send_buf_size);
@@ -560,76 +645,34 @@ DMAcontext* DMA_create(struct ibv_device* /*ib_dev*/, int thread_id, bool isPS)
     uint8_t* recv_ring = (uint8_t*)malloc(ring_bytes);
     memset(recv_ring, 0, ring_bytes);
 
-    // Socket setup
-    int sockfd = ::socket(AF_INET, SOCK_DGRAM, 0);
-    if (sockfd < 0) { perror("socket"); exit(1); }
-    int flags = fcntl(sockfd, F_GETFL, 0);
-    fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
-
-    // Bind the socket to a specific interface (by default "veth")
-    // Provide interface name via env var P4ML_UDP_IFACE (e.g., "veth0").
-    // Requires CAP_NET_RAW/root inside the container/host.
-    const char* iface_env = getenv("P4ML_UDP_IFACE");
-    const char* iface_default = "veth";
-    const char* iface = iface_env ? iface_env : iface_default;
-    if (setsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE, iface, strlen(iface) + 1) != 0) {
-        perror("setsockopt(SO_BINDTODEVICE)");
-        if (!iface_env) {
-            fprintf(stderr, "[UDP] Failed to bind to default interface '%s'\n", iface_default);
-        }
-    } else {
-        fprintf(stderr, "[UDP] Bound socket to device '%s'\n", iface);
-    }
-
-    const char* base_port_env = getenv("P4ML_BASE_PORT");
-    int base_port = base_port_env ? atoi(base_port_env) : 6000;
-
-    sockaddr_in peer{};
-    peer.sin_family = AF_INET;
-
-    if (isPS) {
-        // Bind server side
-        sockaddr_in bind_addr{};
-        bind_addr.sin_family = AF_INET;
-        bind_addr.sin_addr.s_addr = INADDR_ANY;
-        bind_addr.sin_port = htons(base_port + thread_id);
-        if (bind(sockfd, (sockaddr*)&bind_addr, sizeof(bind_addr)) < 0) {
-            perror("bind"); exit(1);
-        }
-        // Optional client IP hint for responses
-        const char* client_ip = getenv("P4ML_CLIENT_IP");
-        if (!client_ip) client_ip = "127.0.0.1";
-        peer.sin_addr.s_addr = inet_addr(client_ip);
-        peer.sin_port = htons(base_port + thread_id);
-    } else {
-        const char* server_ip = getenv("P4ML_SERVER_IP");
-        if (!server_ip) server_ip = "127.0.0.1";
-        peer.sin_addr.s_addr = inet_addr(server_ip);
-        peer.sin_port = htons(base_port + thread_id);
-        // Do not bind; let OS choose ephemeral port
-    }
-
-    return new DMAcontext{
-        .send_region = send_buf,
-        .mp_recv_ring = recv_ring,
-        .id = thread_id,
-        .total_received = 0,
-        .total_sent = 0,
-        .my_send_queue_length = my_send_queue_length,
-        .my_recv_queue_length = my_recv_queue_length,
-        .ring_head = 0,
-        .isPS = isPS,
-        .isMarkTimeStamp = false,
-        .isSent = nullptr,
-        .first_send_time = nullptr,
-        .first_receive_time = nullptr,
-        .sockfd = sockfd,
-        .peer_addr = peer,
-    };
+    DMAcontext* ctx = new DMAcontext{};
+    ctx->send_region = send_buf;
+    ctx->mp_recv_ring = recv_ring;
+    ctx->id = thread_id;
+    ctx->total_received = 0;
+    ctx->total_sent = 0;
+    ctx->my_send_queue_length = my_send_queue_length;
+    ctx->my_recv_queue_length = my_recv_queue_length;
+    ctx->ring_head = 0;
+    ctx->nb_rx_rolling = 0;
+    ctx->sge_idx = 0;
+    ctx->cqe_idx = 0;
+    ctx->isPS = isPS;
+    ctx->isMarkTimeStamp = false;
+    ctx->isSent = nullptr;
+    ctx->first_send_time = nullptr;
+    ctx->first_receive_time = nullptr;
+    ctx->port_id = g_dpdk_port_inited.load();
+    ctx->rx_q = 0;
+    ctx->tx_q = 0;
+    ctx->mbuf_pool = g_dpdk_mempool;
+    memset(ctx->rx_mbufs, 0, sizeof(ctx->rx_mbufs));
+    return ctx;
 }
 
 void send_packet(DMAcontext* dma_context, int packet_size, uint64_t offset)
 {
+    // packet_size is multiple of P4ML_LAYER_SIZE. Build and send per-layer packets.
     int layers = packet_size / P4ML_LAYER_SIZE;
     char* base = (char*)dma_context->send_region;
     for (int i = 0; i < layers; i++) {
@@ -642,11 +685,27 @@ void send_packet(DMAcontext* dma_context, int packet_size, uint64_t offset)
                 dma_context->first_send_time[ntohs(hdr->seq_num)] = std::chrono::high_resolution_clock::now();
             }
         }
-        ssize_t s = sendto(dma_context->sockfd, layer, P4ML_LAYER_SIZE, 0,
-                           (sockaddr*)&dma_context->peer_addr, sizeof(dma_context->peer_addr));
-        if (s < 0) {
-            if (errno == EWOULDBLOCK || errno == EAGAIN) continue;
-            perror("sendto"); exit(1);
+
+        rte_mbuf* m = rte_pktmbuf_alloc(dma_context->mbuf_pool);
+        if (!m) dpdk_die("mbuf alloc failed");
+        char* data = (char*)rte_pktmbuf_append(m, IP_ETH_UDP_HEADER_SIZE + P4ML_LAYER_SIZE);
+        if (!data) dpdk_die("mbuf append failed");
+
+        char hdr[IP_ETH_UDP_HEADER_SIZE];
+        if (dma_context->isPS)
+            memcpy(hdr, PS_IP_ETH_UDP_HEADER, IP_ETH_UDP_HEADER_SIZE);
+        else
+            memcpy(hdr, WORKER_IP_ETH_UDP_HEADER, IP_ETH_UDP_HEADER_SIZE);
+        hdr[5] = dma_context->id; // encode thread id into dest MAC last byte, same as RDMA path
+
+        memcpy(data, hdr, IP_ETH_UDP_HEADER_SIZE);
+        memcpy(data + IP_ETH_UDP_HEADER_SIZE, layer, P4ML_LAYER_SIZE);
+
+        uint16_t nb = rte_eth_tx_burst(dma_context->port_id, dma_context->tx_q, &m, 1);
+        if (nb < 1) {
+            rte_pktmbuf_free(m);
+            // drop on congestion; keep going to avoid blocking
+            continue;
         }
         dma_context->total_sent++;
     }
@@ -654,32 +713,40 @@ void send_packet(DMAcontext* dma_context, int packet_size, uint64_t offset)
 
 size_t receive_packet(DMAcontext *dma_context, cqe_snapshot_t* new_snapshot)
 {
-    // Socket payload starts directly with agghdr; no header offset.
-    size_t count = 0;
-    for (;;) {
-        uint8_t* slot = &dma_context->mp_recv_ring[dma_context->ring_head * kAppRingMbufSize];
-        ssize_t r = recv(dma_context->sockfd, slot, kAppRingMbufSize, MSG_DONTWAIT);
-        if (r < 0) {
-            if (errno == EWOULDBLOCK || errno == EAGAIN) break;
-            perror("recv"); break;
-        }
-        if (r == 0) break; // No data
-        // Fake snapshot advance
+    const uint16_t BURST = POLLING_SIZE;
+    rte_mbuf* bufs[BURST];
+    uint16_t nb = rte_eth_rx_burst(dma_context->port_id, dma_context->rx_q, bufs, BURST);
+    if (nb == 0) return 0;
+
+    size_t received = 0;
+    for (uint16_t i = 0; i < nb; i++) {
+        rte_mbuf* m = bufs[i];
+        uint32_t pkt_len = rte_pktmbuf_pkt_len(m);
+        uint8_t* slot = &dma_context->mp_recv_ring[(dma_context->ring_head + received) % kAppNumRingEntries * kAppRingMbufSize];
+        uint32_t to_copy = std::min<uint32_t>(pkt_len, kAppRingMbufSize);
+        rte_pktmbuf_read(m, 0, to_copy, slot);
+        // Save mbuf to free on postback when upper layer advances ring_head
+        dma_context->rx_mbufs[(dma_context->ring_head + received) % kAppNumRingEntries] = m;
+        // Fake snapshot
         new_snapshot->wqe_id = 0;
         new_snapshot->wqe_counter = 0;
-        // Advance ring head AFTER upper layer processes via dma_postback, so do not here.
-        count++;
-        if (count >= POLLING_SIZE) break; // Cap batch
+        received++;
     }
-    dma_context->total_received += count;
-    return count;
+    dma_context->total_received += received;
+    return received;
 }
 
 void dma_postback(DMAcontext *dma_context)
 {
+    // Free mbuf associated with current ring_head then advance
+    uint16_t idx = dma_context->ring_head % kAppNumRingEntries;
+    if (dma_context->rx_mbufs[idx]) {
+        rte_pktmbuf_free(dma_context->rx_mbufs[idx]);
+        dma_context->rx_mbufs[idx] = nullptr;
+    }
     dma_context->ring_head = (dma_context->ring_head + 1) % kAppNumRingEntries;
 }
 
-void dma_update_snapshot(DMAcontext *dma_context, cqe_snapshot_t /*new_snapshot*/) { /* no-op */ }
+void dma_update_snapshot(DMAcontext * /*dma_context*/, cqe_snapshot_t /*new_snapshot*/) { /* no-op */ }
 
-#endif // USE_RDMA
+#endif // USE_RDMA / USE_DPDK

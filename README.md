@@ -1,50 +1,42 @@
-## Socket Fallback (No RDMA)
+## DPDK Transport (Kernel-bypass)
 
-This repository originally depended on RDMA (libibverbs/rdmacm) for packet send/receive. A minimal UDP socket fallback has been added so experiments can run inside container networks without RDMA hardware or kernel modules.
+This repository uses DPDK for packet send/receive (userspace kernel-bypass). The legacy UDP socket fallback has been removed.
 
 ### Build
 
-By default RDMA is disabled and the socket transport is used:
+By default builds use DPDK:
 
 ```
-make -C client
-make -C server
+make -C client DPDK=1
+make -C server DPDK=1
 ```
 
-To enable the original RDMA path (requires verbs libraries and device):
+Optionally, you can enable the original RDMA path (requires verbs libraries and device):
 
 ```
 make -C client RDMA=1
 make -C server RDMA=1
 ```
 
-### Runtime Configuration (Socket Mode)
-
-Environment variables allow basic addressing without code changes:
-
-- `P4ML_SERVER_IP`: IP address of the parameter server (set in client containers)
-- `P4ML_CLIENT_IP`: IP address of a client (set in server container if needed for replies)
-- `P4ML_BASE_PORT`: Base UDP port (default 6000). Each thread uses `base + thread_id`.
-- `P4ML_UDP_IFACE`: Network interface to bind UDP sockets, by default `veth`.
-
-Example (single client and server on same host/network):
+Provide DPDK EAL arguments via `DPDK_EAL_ARGS` and optionally choose the port with `DPDK_PORT_ID` (default 0). Example:
 
 ```
-export P4ML_SERVER_IP=10.0.0.5
-export P4ML_BASE_PORT=7000
-make -C server &
-make -C client
+export DPDK_EAL_ARGS="-l 0-1 -n 4 --allow=0000:01:00.0"
+export DPDK_PORT_ID=0
 ```
+
+### Runtime Configuration
+
+- `DPDK_EAL_ARGS`: DPDK EAL parameters (cores, mem channels, device allowlist, etc.)
+- `DPDK_PORT_ID`: Port id to use for RX/TX (default 0)
 
 ### Differences vs RDMA
 
-- No flow rules, CQE snapshots, or zero-copy—simple datagram send/recv.
-- Packet header offset (`P4ML_HEADER_OFFSET`) becomes 0 in socket mode.
+- DPDK: userspace NIC I/O with bursts; packets include L2/L3 header inline like RDMA; header offset (`P4ML_HEADER_OFFSET`) is 34.
 - Loss/timeout logic remains, but timing characteristics differ.
 
 ### Notes
 
-- The fallback focuses on compilation and functional API compatibility, not performance parity.
 - Further tuning (batching, pacing, reliability) can be added incrementally without changing higher-level logic.
 
 # ATP

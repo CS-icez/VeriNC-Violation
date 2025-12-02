@@ -127,29 +127,40 @@ struct DMAcontext {
     std::chrono::high_resolution_clock::time_point* first_send_time;
     std::chrono::high_resolution_clock::time_point* first_receive_time;
 };
-#else
-// Socket fallback (no RDMA). Only keep fields actually referenced by higher layers.
+#elif defined(USE_DPDK)
+#include <rte_config.h>
+#include <rte_eal.h>
+#include <rte_ethdev.h>
+#include <rte_mbuf.h>
 struct DMAcontext {
-    void* send_region;              // Buffer of P4ML layers (without IP/UDP headers)
-    uint8_t* mp_recv_ring;          // Ring for received payloads
+    void* send_region;              // Buffer of P4ML layers (without L2/L3 headers)
+    uint8_t* mp_recv_ring;          // Software ring for received frames (eth+payload)
     int id;                         // Logical thread id
     int total_received;
     int total_sent;
     int my_send_queue_length;       // Capacity hint
     int my_recv_queue_length;       // Capacity hint
     size_t ring_head;               // Current ring head index
-    size_t nb_rx_rolling;           // Dummy counter for compatibility
-    size_t sge_idx;                 // Unused in socket mode
-    size_t cqe_idx;                 // Unused in socket mode
+    size_t nb_rx_rolling;           // Rolling counter (unused)
+    size_t sge_idx;                 // Unused
+    size_t cqe_idx;                 // Unused
     cqe_snapshot_t prev_snapshot;   // Placeholder for compatibility
     bool isPS;                      // Is parameter server side
     bool isMarkTimeStamp;           // Enable timestamp marking
     bool* isSent;
     std::chrono::high_resolution_clock::time_point* first_send_time;
     std::chrono::high_resolution_clock::time_point* first_receive_time;
-    int sockfd;                     // UDP socket fd
-    struct sockaddr_in peer_addr;   // Peer address (destination or client)
+
+    // DPDK resources
+    uint16_t port_id;
+    uint16_t rx_q;
+    uint16_t tx_q;
+    rte_mempool* mbuf_pool;
+    // Keep mbufs to free after upper layer consumes slot
+    rte_mbuf* rx_mbufs[kAppNumRingEntries];
 };
+#else
+#error "UDP fallback has been removed. Build with USE_DPDK (default) or USE_RDMA."
 #endif
 
 DMAcontext* DMA_create(struct ibv_device* ib_dev, int thread_id, bool isPS);
@@ -171,7 +182,9 @@ size_t get_cycle_delta(const cqe_snapshot_t& prev, const cqe_snapshot_t& cur);
 // With socket fallback we only send application payload.
 #ifdef USE_RDMA
 #define P4ML_HEADER_OFFSET IP_ETH_UDP_HEADER_SIZE
+#elif defined(USE_DPDK)
+#define P4ML_HEADER_OFFSET IP_ETH_UDP_HEADER_SIZE
 #else
-#define P4ML_HEADER_OFFSET 0
+#error "UDP fallback removed. Define USE_DPDK or USE_RDMA."
 #endif
 #endif
