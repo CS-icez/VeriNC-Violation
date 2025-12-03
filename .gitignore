@@ -14,3 +14,4 @@ zlog-cfg-cur
 bf_drivers.log
 model*.log
 /pcap_output/
+temp*

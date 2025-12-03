@@ -33,9 +33,9 @@ topology:
           rm $SDE_INSTALL/lib/libpltfm_mgr.so
           sleep 5
           stdbuf -oL $SDE/run_tofino_model.sh -f ports.json -p $program_name &> log/tofino_model.log &
-          sleep 3
+          sleep 10
           $SDE/run_switchd.sh -p $program_name &> log/switchd.log &
-          # sleep 18
+          sleep 15
           $SDE/run_bfshell.sh -b $PROJ_DIR/atp-p4-16/bfrt_python/setup.py &> log/bfrt_setup.log
           sleep infinity
           "
@@ -55,7 +55,7 @@ topology:
       exec:
         - bash -c "cat $PROJ_DIR/set-client-env.sh >> /root/.bashrc"
         - hostname client0
-        - sleep 25
+        - sleep 45
         - bash -ic "run"
       #   - ip link set dev veth address 00:11:22:33:44:55 # Containerlab: docker run -> veth pairs -> docker exec.
       #   - sleep 35
@@ -74,7 +74,7 @@ topology:
       exec:
         - bash -c "cat $PROJ_DIR/set-client-env.sh >> /root/.bashrc"
         - hostname client1
-        - sleep 25.5
+        - sleep 45.5
         - bash -ic "run"
       #   - ip link set dev veth address 00:11:22:33:44:66
       #   - sleep 35

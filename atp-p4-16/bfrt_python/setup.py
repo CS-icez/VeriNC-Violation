@@ -75,7 +75,9 @@ modify_packet_bitmap_table = SwitchIngress.appid_seq.modify_packet_bitmap_table
 
 modify_packet_bitmap_table.add_with_modify_packet_bitmap(dataIndex=1)
 
-modify_packet_bitmap_table.add_with_nop(dataIndex=0)
+# modify_packet_bitmap_table.add_with_nop(dataIndex=0)
+modify_packet_bitmap_table.add_with_modify_packet_bitmap(dataIndex=0)
+
 
 MAC_address_of_worker = [
                           "98:03:9b:59:b0:34"  # 11.238.201.138 -> eth4
