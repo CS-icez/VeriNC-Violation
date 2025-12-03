@@ -160,7 +160,7 @@ void P4mlManager::main_receive_packet_loop(DMAcontext* dma_context,
     int total_packet = window_manager[my_id].total_ACK;
     int rand_index = 0;
 
-    float timeout_value = 10;
+    float timeout_value = 1;
 
     int window = max_agtr_size_per_thread;
     /* Loss simulation */

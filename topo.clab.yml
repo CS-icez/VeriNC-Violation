@@ -31,7 +31,8 @@ topology:
           cp p4-16-build/$program_name.conf $SDE_INSTALL/share/p4/targets/tofino
           rm model*.log bf_drivers.log*
           rm $SDE_INSTALL/lib/libpltfm_mgr.so
-          $SDE/run_tofino_model.sh -f ports.json -p $program_name &> log/tofino_model.log &
+          sleep 5
+          stdbuf -oL $SDE/run_tofino_model.sh -f ports.json -p $program_name &> log/tofino_model.log &
           sleep 3
           $SDE/run_switchd.sh -p $program_name &> log/switchd.log &
           # sleep 18
@@ -54,7 +55,7 @@ topology:
       exec:
         - bash -c "cat $PROJ_DIR/set-client-env.sh >> /root/.bashrc"
         - hostname client0
-        - sleep 20
+        - sleep 25
         - bash -ic "run"
       #   - ip link set dev veth address 00:11:22:33:44:55 # Containerlab: docker run -> veth pairs -> docker exec.
       #   - sleep 35
@@ -73,7 +74,7 @@ topology:
       exec:
         - bash -c "cat $PROJ_DIR/set-client-env.sh >> /root/.bashrc"
         - hostname client1
-        - sleep 20
+        - sleep 25.5
         - bash -ic "run"
       #   - ip link set dev veth address 00:11:22:33:44:66
       #   - sleep 35
