@@ -160,7 +160,7 @@ void P4mlManager::main_receive_packet_loop(DMAcontext* dma_context,
     int total_packet = window_manager[my_id].total_ACK;
     int rand_index = 0;
 
-    float timeout_value = 0.05;
+    float timeout_value = 10;
 
     int window = max_agtr_size_per_thread;
     /* Loss simulation */
@@ -254,7 +254,7 @@ void P4mlManager::main_receive_packet_loop(DMAcontext* dma_context,
             }
         }
 
-        timeout_value = 0.0002;
+        // timeout_value = 0.0002;
         /* circle alignment */
         if (this_pos_to_send + max_agtr_size_per_thread + max_agtr_size_per_thread > dma_context->my_send_queue_length / 2)
             this_pos_to_send = 0;

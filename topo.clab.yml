@@ -54,6 +54,8 @@ topology:
       exec:
         - bash -c "cat $PROJ_DIR/set-client-env.sh >> /root/.bashrc"
         - hostname client0
+        - sleep 20
+        - bash -ic "run"
       #   - ip link set dev veth address 00:11:22:33:44:55 # Containerlab: docker run -> veth pairs -> docker exec.
       #   - sleep 35
       #   - bash -ic "cd $PROJ_DIR/dev_root/build/bin && ./hello_world &> $PROJ_DIR/log/violation_worker1.log"
@@ -71,6 +73,8 @@ topology:
       exec:
         - bash -c "cat $PROJ_DIR/set-client-env.sh >> /root/.bashrc"
         - hostname client1
+        - sleep 20
+        - bash -ic "run"
       #   - ip link set dev veth address 00:11:22:33:44:66
       #   - sleep 35
       #   - bash -ic 'cd $PROJ_DIR/dev_root/build/bin && ./hello_world &> $PROJ_DIR/log/violation_worker2.log'
@@ -87,6 +91,7 @@ topology:
       cmd: sleep infinity
       exec:
         - bash -c "cat $PROJ_DIR/set-server-env.sh >> /root/.bashrc"
+        - bash -ic "run"
       #   - hostname server
       #   - ip link set dev veth address 00:11:22:33:44:77
       #   - sleep 35

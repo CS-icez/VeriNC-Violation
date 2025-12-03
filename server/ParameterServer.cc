@@ -1,4 +1,7 @@
 #include "ParameterServer.h"
+#include <cstdarg>
+#include <ctime>
+#include <sys/stat.h>
 
 tensor_context *tensors;
 
@@ -34,12 +37,77 @@ int resend_packet_count[MAX_MEASUREMENT_KEY][16518] = { 0 };
 
 DMAcontext** global_dma_contexts;
 
+// --- Simple runtime-controlled logging ---
+static bool g_log_enabled = false;
+static FILE* g_log_fp = nullptr;
+static std::mutex g_log_mu;
+
+static void log_init() {
+    const char* env = getenv("ATP_SERVER_LOG");
+    if (env && env[0] != '\0' && env[0] != '0') {
+        g_log_enabled = true;
+        // Try to ensure log directory exists; ignore errors if it does
+        // mkdir("log", 0777);
+        // g_log_fp = fopen("log/server.log", "a");
+        // if (!g_log_fp) {
+            g_log_fp = stderr;
+        // }
+    } else {
+        g_log_enabled = false;
+        g_log_fp = nullptr;
+    }
+}
+
+static void logf(const char* fmt, ...) {
+    if (!g_log_enabled) return;
+    std::lock_guard<std::mutex> lock(g_log_mu);
+    if (!g_log_fp) g_log_fp = stderr;
+    // Timestamp
+    std::time_t t = std::time(nullptr);
+    std::tm tmv;
+    localtime_r(&t, &tmv);
+    char ts[32];
+    std::strftime(ts, sizeof(ts), "%F %T", &tmv);
+    fprintf(g_log_fp, "[%s] ", ts);
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(g_log_fp, fmt, ap);
+    va_end(ap);
+    fputc('\n', g_log_fp);
+    fflush(g_log_fp);
+}
+
+static void print_packet_hex(const uint8_t* pkt, size_t len) {
+    for (size_t off = 0; off < len; off += 16) {
+        size_t line_len = std::min<size_t>(16, len - off);
+        char line[256];
+        int pos = snprintf(line, sizeof(line), "0x%04zx:  ", off);
+        for (size_t i = 0; i < 16; i += 2) {
+            if (i + 1 < line_len) {
+                pos += snprintf(line + pos, sizeof(line) - pos, "%02x%02x ", pkt[off + i], pkt[off + i + 1]);
+            } else if (i < line_len) {
+                pos += snprintf(line + pos, sizeof(line) - pos, "%02x   ", pkt[off + i]);
+            } else {
+                pos += snprintf(line + pos, sizeof(line) - pos, "     ");
+            }
+        }
+        pos += snprintf(line + pos, sizeof(line) - pos, " ");
+        for (size_t i = 0; i < line_len; ++i) {
+            uint8_t c = pkt[off + i];
+            char ch = (c >= 0x20 && c < 0x7f) ? static_cast<char>(c) : '.';
+            pos += snprintf(line + pos, sizeof(line) - pos, "%c", ch);
+        }
+        logf("%s", line);
+    }
+}
+
 void main_receive_packet_loop(DMAcontext* dma_context, int thread_id) {
     int msgs_completed = 0;
     int this_pos_to_send = 0;
     int total_last_tensor_packet = 0;
     int imm_pos_to_send = dma_context->my_send_queue_length / 2;
     bool app_init[MAX_APP_PER_THREAD] = {0};
+    logf("thread %d: receive loop started (send_queue_half=%d)", thread_id, imm_pos_to_send);
     
     /* Loss */
     int loss = 0;
@@ -79,6 +147,7 @@ void main_receive_packet_loop(DMAcontext* dma_context, int thread_id) {
                 std::lock_guard<std::mutex> lock(_dma_mutex);
                 fprintf(stderr, "Timeout happened this thread_id=%d, total_received=%d, total_sent=%d, last_ACK=%d, total_last_tensor_packet_recv=%d\n",
                     thread_id, global_dma_contexts[thread_id]->total_received, global_dma_contexts[thread_id]->total_sent, tensors[tensors_pos_of_app[1]].window_manager[0].last_ACK, total_last_tensor_packet);
+                logf("thread %d: timeout with rx=%d tx=%d", thread_id, global_dma_contexts[thread_id]->total_received, global_dma_contexts[thread_id]->total_sent);
                 for (int i = 0; i < num_thread; i++)
                     fprintf(stderr, "Timeout happened at thread_id=%d, total_received=%d, total_sent=%d\n", i, global_dma_contexts[i]->total_received, global_dma_contexts[i]->total_sent);
 
@@ -116,6 +185,17 @@ void main_receive_packet_loop(DMAcontext* dma_context, int thread_id) {
             // std::chrono::high_resolution_clock::time_point packet_start = std::chrono::high_resolution_clock::now();
             uint8_t* buf = &dma_context->mp_recv_ring[dma_context->ring_head * kAppRingMbufSize];
 
+            if (buf[0] == 0x33 && buf[1] == 0x33) {
+                printf("ICMPv6 Packet Received, Drop it.\n");
+                dma_postback(dma_context);
+                continue;
+            }
+            if (std::all_of(buf, buf + 48, [](uint8_t b) { return b == 0; })) {
+                printf("All zero packet received, drop it.\n");
+                dma_postback(dma_context);
+                continue;
+            }
+
             agghdr* p4ml_header = reinterpret_cast<agghdr*>(buf + P4ML_HEADER_OFFSET);
 
             //check ecn mark
@@ -134,16 +214,11 @@ void main_receive_packet_loop(DMAcontext* dma_context, int thread_id) {
             /* Move AppID index */
             int appID = p4ml_header->appID;
 
-            bool header_ok = true;
-            if (appID <= 0 || appID > MAX_APP_PER_THREAD) header_ok = false;
-            if (p4ml_header->len_tensor > MAX_TENSOR_SIZE) header_ok = false;
-            if (p4ml_header->num_worker == 0 || p4ml_header->num_worker > MAX_WORKER) header_ok = false;
-
-            if (!header_ok) {
-                // Drop and advance ring safely
-                dma_postback(dma_context);
-                continue;
-            }
+            // Log basic receive header
+            logf("thread %d [recv]: app=%d key=%u seq=%u bitmap=0x%x agtr=%u flags(resend=%d, overflow=%d)",
+                thread_id, appID, p4ml_header->key, p4ml_header->seq_num, p4ml_header->bitmap,
+                p4ml_header->agtr, isResend_packet, isOverflow_packet);
+            print_packet_hex(buf, 64);
 
             if (!app_init[appID]) {
                 app_init[appID] = true;
@@ -233,6 +308,9 @@ void main_receive_packet_loop(DMAcontext* dma_context, int thread_id) {
 
             /* Check Full Packet */
             bool isFullPacket = (1 << p4ml_header->num_worker) - 1 == p4ml_header->bitmap? 1:0;
+            if (isFullPacket) {
+                logf("thread %d [full]: app=%d key=%u seq=%u workers=%u", thread_id, appID, p4ml_header->key, p4ml_header->seq_num, p4ml_header->num_worker);
+            }
 
             
             if (receive_byte_reset_flag[thread_id]) {
@@ -362,6 +440,7 @@ void main_receive_packet_loop(DMAcontext* dma_context, int thread_id) {
                     p4ml_header_resetIndex((agghdr*)((char*)dma_context->send_region + (imm_pos_to_send * P4ML_LAYER_SIZE)));
 
                     send_packet(dma_context, P4ML_LAYER_SIZE, imm_pos_to_send);
+                    logf("thread %d [ack-immediate]: app=%d key=%u seq=%u resend=1 overflow=%d send_pos=%d", thread_id, appID, p4ml_header->key, p4ml_header->seq_num, isOverflow_packet, imm_pos_to_send);
                     imm_pos_to_send++;
                     if (imm_pos_to_send == dma_context->my_send_queue_length - 1)
                         imm_pos_to_send = dma_context->my_send_queue_length / 2 + 1;
@@ -375,6 +454,7 @@ void main_receive_packet_loop(DMAcontext* dma_context, int thread_id) {
                     p4ml_header_resetIndex((agghdr*)((char*)dma_context->send_region + (this_pos_to_send + to_be_sent) * P4ML_LAYER_SIZE));
 
                     to_be_sent++;
+                    logf("thread %d [ack-queued]: app=%d key=%u seq=%u resend=0 overflow=%d queued=%d batch_pos=%d", thread_id, appID, p4ml_header->key, p4ml_header->seq_num, isOverflow_packet, to_be_sent, this_pos_to_send);
                 }
                 // printf("to_be_sent: %d\n", to_be_sent);
 
@@ -414,6 +494,7 @@ void main_receive_packet_loop(DMAcontext* dma_context, int thread_id) {
             else
                 receive_in_sec[thread_id] += msgs_completed;
             if (to_be_sent > 0) {
+                logf("thread %d [send-batch]: count=%d pos=%d bytes=%d", thread_id, to_be_sent, this_pos_to_send, P4ML_LAYER_SIZE * to_be_sent);
                 send_packet(dma_context, P4ML_LAYER_SIZE * to_be_sent, this_pos_to_send);
             }
             this_pos_to_send += to_be_sent;
@@ -446,6 +527,9 @@ int main(int argc, char *argv[]) {
     srand(time(NULL));
     // num_thread = atoi(argv[1]);
 
+    log_init();
+    logf("server starting");
+
     appID = atoi(argv[1]);
     // Lam: this one is for experiment, disable temporary
     // if (argv[1])
@@ -467,8 +551,10 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
     printf("Using RDMA device: %s\n", ibv_get_device_name(ib_dev));
+    logf("transport=RDMA device=%s", ibv_get_device_name(ib_dev));
 #else
     printf("RDMA disabled. Using DPDK transport.\n");
+    logf("transport=DPDK");
 #endif
 
     /* Init Thread */
@@ -477,6 +563,7 @@ int main(int argc, char *argv[]) {
     global_dma_contexts = new DMAcontext*[num_thread];
     printf("\nUsedSwitchAGTRcount: %d\n\n", UsedSwitchAGTRcount);
     printf("max_agtr_size_per_thread: %d\n\n", max_agtr_size_per_thread);
+    logf("params: UsedSwitchAGTRcount=%d max_agtr_size_per_thread=%d appID=%d", UsedSwitchAGTRcount, max_agtr_size_per_thread, appID);
 
     printf("Overflow Handled: %s\n\n", OVERFLOW_HANDLE? "TRUE":"FALSE");
     /* Init tensors capacity */
@@ -491,6 +578,7 @@ int main(int argc, char *argv[]) {
     
     for (int i = 0; i < num_thread; i++)
         workQueue->enqueue(Start, i);
+    logf("threads enqueued: %d", num_thread);
 
     std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
     std::chrono::time_point<std::chrono::system_clock> timer = std::chrono::high_resolution_clock::now();

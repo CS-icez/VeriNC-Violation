@@ -724,7 +724,19 @@ size_t receive_packet(DMAcontext *dma_context, cqe_snapshot_t* new_snapshot)
         uint32_t pkt_len = rte_pktmbuf_pkt_len(m);
         uint8_t* slot = &dma_context->mp_recv_ring[(dma_context->ring_head + received) % kAppNumRingEntries * kAppRingMbufSize];
         uint32_t to_copy = std::min<uint32_t>(pkt_len, kAppRingMbufSize);
-        rte_pktmbuf_read(m, 0, to_copy, slot);
+
+        // Copy the packet payload from chained mbufs into our contiguous ring slot
+        uint32_t copied = 0;
+        for (rte_mbuf* seg = m; seg && copied < to_copy; seg = seg->next) {
+            char* seg_data = rte_pktmbuf_mtod(seg, char*);
+            uint16_t seg_len = rte_pktmbuf_data_len(seg);
+            uint32_t chunk = std::min<uint32_t>(seg_len, to_copy - copied);
+            rte_memcpy(slot + copied, seg_data, chunk);
+            copied += chunk;
+        }
+        // Zero the remainder of the slot if any
+        if (copied < kAppRingMbufSize) memset(slot + copied, 0, kAppRingMbufSize - copied);
+
         // Save mbuf to free on postback when upper layer advances ring_head
         dma_context->rx_mbufs[(dma_context->ring_head + received) % kAppNumRingEntries] = m;
         // Fake snapshot
