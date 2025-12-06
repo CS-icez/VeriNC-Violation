@@ -36,6 +36,7 @@ topology:
           rm $SDE_INSTALL/lib/libpltfm_mgr.so
           $SDE_INSTALL/bin/veth_setup.sh 300
           program_name=netbufferv4
+          sleep 5
           $SDE/run_tofino_model.sh -f ports.json -p $program_name &> $LOG_DIR/tofino_model.log &
           sleep 3
           $SDE/run_switchd.sh -p $program_name &> $LOG_DIR/switchd.log &
@@ -48,7 +49,7 @@ topology:
         - hostname tofino
         - bash -c "$PROJ_DIR/config_ssh.sh"
         - bash -c "cd $PROJ_DIR && bash scripts/local/configure_switchos.sh"
-        - sleep 20
+        - sleep 25
         - bash -ic "nohup python3.8 -u $PROJ_DIR/tofino_veth_fwder.py &> $PROJ_DIR/log/tofino_veth_fwder.log &"
 
     client0: # Main client dl11.
@@ -68,7 +69,7 @@ topology:
         - ip addr add 10.0.1.11/24 dev veth
         - bash -c "$PROJ_DIR/config_ssh.sh"
         - bash -c "cd $PROJ_DIR && bash scripts/local/configure_client.sh 0"
-        - sleep 30
+        - sleep 35
         - bash -c "cd $PROJ_DIR && bash scripts/remote/test_server_rotation.sh &> $LOG_DIR/server_rotation.log"
 
     client1: # Secondary client dl20.
@@ -89,7 +90,7 @@ topology:
         - bash -c "$PROJ_DIR/config_ssh.sh"
         - bash -c "cd $PROJ_DIR && bash scripts/local/configure_client.sh 1"
         - bash -c "cd $PROJ_DIR/benchmark/output/violation-pregeneration && mv -f logicalclient-1.out logicalclient-0.out"
-        - sleep 200
+        - sleep 300
         - bash -c "cat $PROJ_DIR/benchmark/ycsb/tmp_serverrotation_part1_client.out >> $LOG_DIR/server_rotation.log"
         - bash -c "grep -P '^\\[\\d+\\]' $LOG_DIR/server_rotation.log | sort -t'[' -k2,2n > $LOG_DIR/violation.log"
 
