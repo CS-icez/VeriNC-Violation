@@ -1,7 +1,8 @@
 .idea
 .vscode
 *.tar
-log
+log/*
+!log/.gitkeep
 *.o
 app
 .DS_Store

@@ -7,7 +7,7 @@ topology:
       image: dpdk:v21.11.4
       mgmt-ipv4: 172.20.20.200
       binds:
-        - ~/myrepo/verinc-atp:/root/atp
+        - /home/icez/myrepo/verinc-atp-oneclick:/root/atp
       cmd: sleep infinity
       exec:
         - bash -c "nohup python3 -u /root/atp/proxy.py &> /root/atp/log/proxy.log &"
@@ -18,7 +18,7 @@ topology:
       mgmt-ipv4: 172.20.20.100
       binds:
         - /dev/hugepages:/mnt/huge
-        - ~/myrepo/verinc-atp:/root/bty/atp
+        - /home/icez/myrepo/verinc-atp-oneclick:/root/bty/atp
       env:
         PROJ_DIR: /root/bty/atp
       cmd: |
@@ -48,7 +48,7 @@ topology:
       mgmt-ipv4: 172.20.20.11
       binds:
         # - /dev/hugepages:/mnt/huge
-        - ~/myrepo/verinc-atp:/root/atp
+        - /home/icez/myrepo/verinc-atp-oneclick:/root/atp
       env:
         PROJ_DIR: /root/atp
       cmd: sleep infinity
@@ -57,9 +57,6 @@ topology:
         - hostname client0
         - sleep 45
         - bash -ic "run"
-      #   - ip link set dev veth address 00:11:22:33:44:55 # Containerlab: docker run -> veth pairs -> docker exec.
-      #   - sleep 35
-      #   - bash -ic "cd $PROJ_DIR/dev_root/build/bin && ./hello_world &> $PROJ_DIR/log/violation_worker1.log"
 
     client1:
       kind: linux
@@ -67,7 +64,7 @@ topology:
       mgmt-ipv4: 172.20.20.12
       binds:
         # - /dev/hugepages:/mnt/huge
-        - ~/myrepo/verinc-atp:/root/atp
+        - /home/icez/myrepo/verinc-atp-oneclick:/root/atp
       env:
         PROJ_DIR: /root/atp
       cmd: sleep infinity
@@ -76,9 +73,6 @@ topology:
         - hostname client1
         - sleep 45.5
         - bash -ic "run"
-      #   - ip link set dev veth address 00:11:22:33:44:66
-      #   - sleep 35
-      #   - bash -ic 'cd $PROJ_DIR/dev_root/build/bin && ./hello_world &> $PROJ_DIR/log/violation_worker2.log'
 
     server:
       kind: linux
@@ -86,17 +80,13 @@ topology:
       mgmt-ipv4: 172.20.20.13
       binds:
         # - /dev/hugepages:/mnt/huge
-        - ~/myrepo/verinc-atp:/root/atp
+        - /home/icez/myrepo/verinc-atp-oneclick:/root/atp
       env:
         PROJ_DIR: /root/atp
       cmd: sleep infinity
       exec:
         - bash -c "cat $PROJ_DIR/set-server-env.sh >> /root/.bashrc"
         - bash -ic "run"
-      #   - hostname server
-      #   - ip link set dev veth address 00:11:22:33:44:77
-      #   - sleep 35
-      #   - bash -ic 'cd $PROJ_DIR/dev_root/build/bin && ./hello_world &> $PROJ_DIR/log/violation_server.log'
 
   links:
     - endpoints: ["client0:veth", "proxy:veth-client0"]
