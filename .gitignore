@@ -10,10 +10,13 @@ dev_root/build/*
 dev_root/build/bin/*
 !dev_root/build/bin/*.cfg
 p4-build/
-log/
+log/*
+!log/.gitkeep
 zlog-cfg-cur
 *.log
 .vscode/
 clab-switchml/
 dev_root/client_lib/src/*.pb.*
 pcap_output/
+topo.clab.yml.*
+topo.clab.drawio
