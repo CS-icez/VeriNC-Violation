@@ -1,5 +1,9 @@
 # VeriNC Real System Violation Reproduction: FissLock
 
+This repository is cloned from [FissLock's official repository](https://github.com/SJTU-IPADS/fisslock).
+
+## Prequisites
+
 Please first refer to the README file of the main branch for general instructions about this project.
 
 ## Build Docker Image
@@ -14,7 +18,7 @@ docker build -t dpdk:v21.11.4 -f dpdk-v21.11.4.Dockerfile .
 
 Replace `<sde_name>` with the name of the Docker image of Barefoot SDE (e.g., `sde:9.7.0`) and run:
 
-```
+```bash
 bash project_setup.sh <sde_name>
 ```
 

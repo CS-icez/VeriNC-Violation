@@ -31,7 +31,8 @@ switch/control/Makefile
 switch/control/.deps
 
 # log file of dpdk
-log
+log/*
+!log/.gitkeep
 
 # experiment data
 # traces/
