@@ -1,4 +1,4 @@
-# VeriNC Real System Violation Reproduction: FissLock
+# VeriNC Real System Violation Reproduction: NetLock
 
 This repository is cloned from [FissLock's official repository](https://github.com/SJTU-IPADS/fisslock). We use the NetLock reproduced by FissLock because the original FissLock implementation is based on P4-14 and is not compatible with the latest Barefoot SDE.
 
