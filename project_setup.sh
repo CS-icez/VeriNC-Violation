@@ -1,0 +1,45 @@
+#!/bin/bash
+
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <sde_name>"
+    exit 1
+fi
+
+function replace_string_in_file() {
+    local file=$1
+    local placeholder=$2
+    local replacement=$3
+
+    sed -i "s|$placeholder|$replacement|g" "$file"
+}
+
+# Replace placeholder SDE name in the clab file with the provided SDE name.
+
+SDE_NAME=$1
+PLACEHOLDER_SDE_NAME="tofino:20251025"
+CLAB_FILE="topo.clab.yml"
+
+replace_string_in_file "$CLAB_FILE" "$PLACEHOLDER_SDE_NAME" "$SDE_NAME"
+
+# Replace hardcoded project directories with the current working directory.
+WORK_DIR=$(pwd)
+PLACEHOLDER_DIR="~/myrepo/verinc-netlock"
+ENV_FILE="experiments/set-env.sh"
+
+replace_string_in_file "$CLAB_FILE" "$PLACEHOLDER_DIR" "$WORK_DIR"
+replace_string_in_file "$ENV_FILE" "$PLACEHOLDER_DIR" "$WORK_DIR"
+
+# Compile P4 code.
+source $ENV_FILE
+
+docker run -it --rm -v $LOCAL_PROJ_PATH:$SWITCH_PROJ_PATH $SDE_NAME bash -ic \
+    "bf-p4c --verbose 3 -g -a tna -b tofino --program-name netlock \
+        -o $SWITCH_PROJ_PATH/netlock-p4-build $SWITCH_PROJ_PATH/baseline/NetLock/switch/p4/netlock.p4"
+
+
+# Compile server code.
+docker run -it --rm -v $LOCAL_PROJ_PATH:$MASTER_FISSLOCK_PATH dpdk:v21.11.4 bash -ic \
+    "make -C $MASTER_FISSLOCK_PATH SYSTEM=netlock"
+
+echo
+echo "Project setup completed successfully."

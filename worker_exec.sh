@@ -1,7 +1,7 @@
-cp /home/bty/netlock/experiments/set-env.sh /root/set-env.sh
+cp /home/abc/netlock/experiments/set-env.sh /root/set-env.sh
 service ssh start
 mkdir -p /root/.ssh
-cp /home/bty/netlock/ssh_config /root/.ssh/config
+cp /home/abc/netlock/ssh_config /root/.ssh/config
 sleep 5
 bash -c "ssh-keyscan -p 22 172.20.20.11 >> /root/.ssh/known_hosts"
 bash -c "ssh-keyscan -p 22 172.20.20.12 >> /root/.ssh/known_hosts"

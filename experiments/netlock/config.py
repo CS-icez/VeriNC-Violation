@@ -1,10 +1,10 @@
 import sys
 
 cluster_name = "worker"
-host_user = "bty"
+host_user = "abc"
 local_home_dir = "/home/" + host_user + "/"
 remote_server_home_dir = "/home/" + host_user + "/"
-remote_switch_home_dir = "/root/bty/netlock/"
+remote_switch_home_dir = "/root/abc/netlock/"
 remote_switch_sde_dir  = "/root/onl-bf-sde/"
 
 switch_id = "tofino"

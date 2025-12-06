@@ -18,21 +18,22 @@ topology:
       mgmt-ipv4: 172.20.20.100
       binds:
         - /dev/hugepages:/mnt/huge
-        - ~/myrepo/verinc-netlock:/root/bty/netlock
+        - ~/myrepo/verinc-netlock:/root/abc/netlock
       cmd: |
           bash -ic "
           mkdir -p /tmp /run/sshd
           service ssh start
-          cd /root/bty/netlock
+          cd /root/abc/netlock
           cp netlock-p4-build/netlock.conf $SDE_INSTALL/share/p4/targets/tofino
           rm $SDE_INSTALL/lib/libpltfm_mgr.so
-          rm /root/bty/netlock/model*.log /root/bty/netlock/bf_drivers.log*
+          rm /root/abc/netlock/model*.log /root/abc/netlock/bf_drivers.log*
+          sleep 5
           $SDE/run_tofino_model.sh -f ports.json -p netlock &> log/tofino_model.log &
           sleep 3
           bash switch/run_lockmgr.sh -p netlock
           "
       exec:
-        - bash -ic "cd /root/bty/netlock && $SDE/run_p4_tests.sh -f `pwd`/ports.json -p netlock -t `pwd`/baseline/NetLock/switch/control --test-params=\"bm='micro'\""
+        - bash -ic "cd /root/abc/netlock && $SDE/run_p4_tests.sh -f `pwd`/ports.json -p netlock -t `pwd`/baseline/NetLock/switch/control --test-params=\"bm='micro'\""
 
     worker1:
       kind: linux
@@ -40,12 +41,12 @@ topology:
       mgmt-ipv4: 172.20.20.11
       binds:
         - /dev/hugepages:/mnt/huge
-        - ~/myrepo/verinc-netlock:/home/bty/netlock
+        - ~/myrepo/verinc-netlock:/home/abc/netlock
       cmd: sleep infinity
       exec:
-        - bash /home/bty/netlock/worker_exec.sh
+        - bash /home/abc/netlock/worker_exec.sh
         - sleep 30
-        - bash -c "cd /home/bty/netlock/experiments && source set-env.sh && ./evaluation.sh netlock violation 0 1"
+        - bash -c "cd /home/abc/netlock/experiments && source set-env.sh && ./evaluation.sh netlock violation 0 1"
 
     worker2:
       kind: linux
@@ -53,10 +54,10 @@ topology:
       mgmt-ipv4: 172.20.20.12
       binds:
         - /dev/hugepages:/mnt/huge
-        - ~/myrepo/verinc-netlock:/home/bty/netlock
+        - ~/myrepo/verinc-netlock:/home/abc/netlock
       cmd: sleep infinity
       exec:
-        - bash /home/bty/netlock/worker_exec.sh
+        - bash /home/abc/netlock/worker_exec.sh
 
     worker3:
       kind: linux
@@ -64,10 +65,10 @@ topology:
       mgmt-ipv4: 172.20.20.13
       binds:
         - /dev/hugepages:/mnt/huge
-        - ~/myrepo/verinc-netlock:/home/bty/netlock
+        - ~/myrepo/verinc-netlock:/home/abc/netlock
       cmd: sleep infinity
       exec:
-        - bash /home/bty/netlock/worker_exec.sh
+        - bash /home/abc/netlock/worker_exec.sh
 
     worker4:
       kind: linux
@@ -75,10 +76,10 @@ topology:
       mgmt-ipv4: 172.20.20.14
       binds:
         - /dev/hugepages:/mnt/huge
-        - ~/myrepo/verinc-netlock:/home/bty/netlock
+        - ~/myrepo/verinc-netlock:/home/abc/netlock
       cmd: sleep infinity
       exec:
-        - bash /home/bty/netlock/worker_exec.sh
+        - bash /home/abc/netlock/worker_exec.sh
 
   links:
     - endpoints: ["worker1:veth", "proxy:veth-worker1"]
