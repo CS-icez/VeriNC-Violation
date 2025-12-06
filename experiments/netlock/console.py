@@ -267,7 +267,7 @@ class NetLockConsole(object):
     #     self.sync_host()
     #     return
     def compile_server(self):
-        cmd_server = "cd {};export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/bty/.local/lib:/home/bty/.local/lib/x86_64-linux-gnu;export LIBRARY_PATH=/home/bty/.local/lib:/home/bty/.local/lib/x86_64-linux-gnu;export CPATH=/home/bty/.local/include;export PKG_CONFIG_PATH=/home/bty/.local/lib/pkgconfig:/home/bty/.local/lib/x86_64-linux-gnu/pkgconfig;make clean;make > {}server_compile.log 2>&1 &".format(self.remote_server_server_dir, self.remote_server_log_dir)
+        cmd_server = "cd {};export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/abc/.local/lib:/home/abc/.local/lib/x86_64-linux-gnu;export LIBRARY_PATH=/home/abc/.local/lib:/home/abc/.local/lib/x86_64-linux-gnu;export CPATH=/home/abc/.local/include;export PKG_CONFIG_PATH=/home/abc/.local/lib/pkgconfig:/home/abc/.local/lib/x86_64-linux-gnu/pkgconfig;make clean;make > {}server_compile.log 2>&1 &".format(self.remote_server_server_dir, self.remote_server_log_dir)
         for client in self.servers:
             print("{} compile server: {}".format(client[0], cmd_server))
             self.exe(client, cmd_server, True)
@@ -275,8 +275,8 @@ class NetLockConsole(object):
 
     def compile_host(self):
         # dpdk_dir = self.remote_server_client_dir
-        cmd_client = "cd {};export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/bty/.local/lib:/home/bty/.local/lib/x86_64-linux-gnu;export LIBRARY_PATH=/home/bty/.local/lib:/home/bty/.local/lib/x86_64-linux-gnu;export CPATH=/home/bty/.local/include;export PKG_CONFIG_PATH=/home/bty/.local/lib/pkgconfig:/home/bty/.local/lib/x86_64-linux-gnu/pkgconfig;make clean;make > {}client_compile.log 2>&1 &".format(self.remote_server_client_dir, self.remote_server_log_dir)
-        cmd_server = "cd {};export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/bty/.local/lib:/home/bty/.local/lib/x86_64-linux-gnu;export LIBRARY_PATH=/home/bty/.local/lib:/home/bty/.local/lib/x86_64-linux-gnu;export CPATH=/home/bty/.local/include;export PKG_CONFIG_PATH=/home/bty/.local/lib/pkgconfig:/home/bty/.local/lib/x86_64-linux-gnu/pkgconfig;make clean;make > {}server_compile.log 2>&1 &".format(self.remote_server_server_dir, self.remote_server_log_dir)
+        cmd_client = "cd {};export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/abc/.local/lib:/home/abc/.local/lib/x86_64-linux-gnu;export LIBRARY_PATH=/home/abc/.local/lib:/home/abc/.local/lib/x86_64-linux-gnu;export CPATH=/home/abc/.local/include;export PKG_CONFIG_PATH=/home/abc/.local/lib/pkgconfig:/home/abc/.local/lib/x86_64-linux-gnu/pkgconfig;make clean;make > {}client_compile.log 2>&1 &".format(self.remote_server_client_dir, self.remote_server_log_dir)
+        cmd_server = "cd {};export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/abc/.local/lib:/home/abc/.local/lib/x86_64-linux-gnu;export LIBRARY_PATH=/home/abc/.local/lib:/home/abc/.local/lib/x86_64-linux-gnu;export CPATH=/home/abc/.local/include;export PKG_CONFIG_PATH=/home/abc/.local/lib/pkgconfig:/home/abc/.local/lib/x86_64-linux-gnu/pkgconfig;make clean;make > {}server_compile.log 2>&1 &".format(self.remote_server_server_dir, self.remote_server_log_dir)
         for client in self.clients + self.clients_2 + self.servers:
             print("{} compile client: {}".format(client[0], cmd_client))
             self.exe(client, cmd_client, True)
@@ -313,7 +313,7 @@ class NetLockConsole(object):
         self.num_of_cores_ls = 8
         for client in self.clients:
             client_id = client[0].strip(cluster_name)
-            cmd = "cd {};export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/bty/.local/lib:/home/bty/.local/lib/x86_64-linux-gnu;export LIBRARY_PATH=/home/bty/.local/lib:/home/bty/.local/lib/x86_64-linux-gnu;export CPATH=/home/bty/.local/include;export PKG_CONFIG_PATH=/home/bty/.local/lib/pkgconfig:/home/bty/.local/lib/x86_64-linux-gnu/pkgconfig; echo '{}' | sudo -E -S LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/bty/.local/lib:/home/bty/.local/lib/x86_64-linux-gnu {}/build/client -a b1:00.0 --lcores 0@0,1@1,2@2,3@3,4@4,5@5,6@6,7@7 -- -m{} -s{} -w{} -i{} -n{} -b{} -r{} -c{} -z90 -e{} -k{} -o{} -l{} -a{} -T{} -C{} -S{} -O{} -g{} -N{}".format(
+            cmd = "cd {};export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/abc/.local/lib:/home/abc/.local/lib/x86_64-linux-gnu;export LIBRARY_PATH=/home/abc/.local/lib:/home/abc/.local/lib/x86_64-linux-gnu;export CPATH=/home/abc/.local/include;export PKG_CONFIG_PATH=/home/abc/.local/lib/pkgconfig:/home/abc/.local/lib/x86_64-linux-gnu/pkgconfig; echo '{}' | sudo -E -S LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/abc/.local/lib:/home/abc/.local/lib/x86_64-linux-gnu {}/build/client -a b1:00.0 --lcores 0@0,1@1,2@2,3@3,4@4,5@5,6@6,7@7 -- -m{} -s{} -w{} -i{} -n{} -b{} -r{} -c{} -z90 -e{} -k{} -o{} -l{} -a{} -T{} -C{} -S{} -O{} -g{} -N{}".format(
                 self.remote_server_client_dir, self.passwd[client[0]], 
                 self.remote_server_client_dir,
                 self.data_transfer_mode, # m
@@ -356,7 +356,7 @@ class NetLockConsole(object):
         self.num_of_cores_ls = 4
         for server in self.servers:
             server_id = server[0].strip(cluster_name)
-            cmd = "cd {};export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/bty/.local/lib:/home/bty/.local/lib/x86_64-linux-gnu;export LIBRARY_PATH=/home/bty/.local/lib:/home/bty/.local/lib/x86_64-linux-gnu;export CPATH=/home/bty/.local/include;export PKG_CONFIG_PATH=/home/bty/.local/lib/pkgconfig:/home/bty/.local/lib/x86_64-linux-gnu/pkgconfig; echo '{}' | sudo -S -E LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/bty/.local/lib:/home/bty/.local/lib/x86_64-linux-gnu {}/build/server -a b1:00.0 --lcores 0@0,1@1,2@2,3@3,4@4 -- -m{} -t -s{} -w{} -i{} -n{} -b{} -r8 -c{} -z90 -e{} -k{} -o{} -l{} -a{} -T{} -C{} -S{} -O{} -g{} -N{} -P{} > {}server_run_{}.log 2>&1 &".format(
+            cmd = "cd {};export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/abc/.local/lib:/home/abc/.local/lib/x86_64-linux-gnu;export LIBRARY_PATH=/home/abc/.local/lib:/home/abc/.local/lib/x86_64-linux-gnu;export CPATH=/home/abc/.local/include;export PKG_CONFIG_PATH=/home/abc/.local/lib/pkgconfig:/home/abc/.local/lib/x86_64-linux-gnu/pkgconfig; echo '{}' | sudo -S -E LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/abc/.local/lib:/home/abc/.local/lib/x86_64-linux-gnu {}/build/server -a b1:00.0 --lcores 0@0,1@1,2@2,3@3,4@4 -- -m{} -t -s{} -w{} -i{} -n{} -b{} -r8 -c{} -z90 -e{} -k{} -o{} -l{} -a{} -T{} -C{} -S{} -O{} -g{} -N{} -P{} > {}server_run_{}.log 2>&1 &".format(
                 self.remote_server_server_dir, 
                 self.passwd[server[0]], 
                 self.remote_server_server_dir, 

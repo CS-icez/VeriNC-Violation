@@ -1,15 +1,15 @@
 import sys
 
 cluster_name = "worker"
-host_user = "bty"
+host_user = "abc"
 local_home_dir = "/home/" + host_user + "/"
 remote_server_home_dir = "/home/" + host_user + "/"
-remote_switch_home_dir = "/root/bty/fisslock/"
+remote_switch_home_dir = "/root/abc/fisslock/"
 remote_switch_sde_dir  = "/root/onl-bf-sde/"
 
 switch_id = "tofino"
 
-id_to_username_dict = {"worker1": "bty", "worker2": "bty", "worker3": "bty", "worker4": "bty", "tofino": "root"}
+id_to_username_dict = {"worker1": "abc", "worker2": "abc", "worker3": "abc", "worker4": "abc", "tofino": "root"}
 
 id_to_passwd_dict = {"worker1": "1234", "worker2": "1234", "worker3": "1234", "worker4": "1234", "tofino": "onl"}
 

@@ -48,4 +48,4 @@ redisapp: $(REDIS_TXN_BIN)
 #####################################################################
 # The test list
 # tests: microbench txnbench redisapp
-tests: microbench txnbench
+tests: microbench
