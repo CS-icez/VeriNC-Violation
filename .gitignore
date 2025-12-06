@@ -59,3 +59,5 @@ zlog-cfg-cur
 pcap*/
 results/
 *.pcap
+topo.clab.yml.*
+topo.clab.drawio
