@@ -51,3 +51,7 @@ In `log/violation.log`, you should see logs similar to the following:
 Client 1 and Client 2 are granted the same exclusive lock at the same time, violating lock exclusion property.
 
 You may refer to other log files in the `log/` directory for more detailed information.
+
+## Network Timing Diagram
+
+![Network Timing Diagram](timing.svg)
