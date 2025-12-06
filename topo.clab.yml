@@ -68,8 +68,9 @@ topology:
         - ip addr add 10.0.1.11/24 dev veth
         - bash -c "$PROJ_DIR/config_ssh.sh"
         - bash -c "cd $PROJ_DIR && bash scripts/local/configure_client.sh 0"
-        # - sleep 30
-        # - bash -c "cd $PROJ_DIR && bash scripts/remote/test_server_rotation.sh &> $LOG_DIR/server_rotation.log"
+        - sleep 30
+        - bash -c "cd $PROJ_DIR && bash scripts/remote/test_server_rotation.sh &> $LOG_DIR/server_rotation.log"
+        - bash -c "grep -P '^\\[\\d+\\]' $LOG_DIR/server_rotation.log | sort -t'[' -k2,2n > $LOG_DIR/violation.log"
 
     client1: # Secondary client dl20.
       kind: linux
@@ -88,10 +89,6 @@ topology:
         - ip addr add 10.0.1.12/24 dev veth
         - bash -c "$PROJ_DIR/config_ssh.sh"
         - bash -c "cd $PROJ_DIR && bash scripts/local/configure_client.sh 1"
-        # - bash -c "cd $PROJ_DIR/benchmark/output/violation-pregeneration && mv -f logicalclient-1.out logicalclient-0.out"
-        # - sleep 200
-        # - bash -c "cat $PROJ_DIR/benchmark/ycsb/tmp_serverrotation_part1_client.out >> $LOG_DIR/server_rotation.log"
-        # - bash -c "grep -P '^\\[\\d+\\]' $LOG_DIR/server_rotation.log | sort -t'[' -k2,2n > $LOG_DIR/violation.log"
 
     server0: # Server 0 dl21.
       kind: linux

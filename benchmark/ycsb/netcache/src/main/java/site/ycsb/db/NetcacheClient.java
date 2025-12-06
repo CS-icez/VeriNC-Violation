@@ -48,6 +48,19 @@ import com.inswitchcache.core.packets.ScanResponseSplit;
 public class NetcacheClient extends RemoteDB {
   private DbUdpNative dbInterface;
 
+  private void log(String msg) {
+    System.out.println("[" + System.nanoTime() + "]" + msg);
+  }
+
+  private String bytesToHex(byte[] data) {
+    if (data == null) return "null";
+    StringBuilder sb = new StringBuilder(Math.min(data.length, 8) * 2);
+    for (int i = 0; i < Math.min(data.length, 8); i++) {
+      sb.append(String.format("%02x", data[i]));
+    }
+    return sb.toString();
+  }
+
   @Override
   public void init() throws DBException {
     super.init();
@@ -76,16 +89,18 @@ public class NetcacheClient extends RemoteDB {
       tmpKey = InswitchCacheClient.getDynamicRulemap().trymap(tmpKey);
     }
 
+    log("[NetcacheClient][SEND][READ] key=" + key);
     // send and recv
     DbUdpNativeResult dbResult = this.dbInterface.getNative(GlobalConfig.getCurmethodId(), tmpKey,
         GlobalConfig.getServerIp(),  (short)(GlobalConfig.getServerWorkerPortStart() +
           (short) tmpKey.getHashPartitionIdx(GlobalConfig.getSwitchPartitionCount(),
                   GlobalConfig.getServerTotalLogicalNum())%GlobalConfig.getserverPerServerLogicalNum()));
-
     try {
       result.put(key, new ByteArrayByteIterator(dbResult.getPktContent()));
+      byte[] val = (dbResult.getValue() != null) ? dbResult.getValue().getValData() : null;
+      log("[NetcacheClient][RECV][READ] key=" + key + " value=" + bytesToHex(val));
     } catch (NullPointerException e) {
-
+      log("[NetcacheClient][RECV][READ] key=" + key + " value=null");
     }
     InswitchCacheClient.updateLoadStatistics(this.localLogicalClientIndex, dbResult);
 
@@ -117,6 +132,7 @@ public class NetcacheClient extends RemoteDB {
     // "[INFO][NetcacheClient] client " + localLogicalClientIndex + ", key = " +
     // startkey + ", end key = " + endKey);
 
+    log("[NetcacheClient][SEND][SCAN] startkey=" + startkey + " recordcount=" + recordcount);
     // send and recv
     DbUdpNativeResult dbResult = this.dbInterface.scanNative(GlobalConfig.getCurmethodId(), startKeyStruct,
         endKeyStruct, GlobalConfig.getServerIp(), GlobalConfig.getServerWorkerPortStart());
@@ -131,6 +147,8 @@ public class NetcacheClient extends RemoteDB {
       for (int j = 0; j < tmppairs.size(); j++) {
         tmpmap.put(tmppairs.get(j).getKey().toString(),
             new ByteArrayByteIterator(tmppairs.get(j).getSnapshotRecord().getVal().getValData()));
+        log("[NetcacheClient][RECV][SCAN] key=" + tmppairs.get(j).getKey().toString()
+            + " value=" + bytesToHex(tmppairs.get(j).getSnapshotRecord().getVal().getValData()));
       }
 
       result.add(tmpmap);
@@ -167,11 +185,13 @@ public class NetcacheClient extends RemoteDB {
       tmpKey = InswitchCacheClient.getDynamicRulemap().trymap(tmpKey);
     }
 
+    log("[NetcacheClient][SEND][UPDATE] key=" + key + " value=" + bytesToHex(tmpValue.getValData()));
     // send and recv
     DbUdpNativeResult dbResult = this.dbInterface.putNative(GlobalConfig.getCurmethodId(), tmpKey, tmpValue,
         (short) this.globalClientLogicalIndex, GlobalConfig.getServerIp(),  (short)(GlobalConfig.getServerWorkerPortStart() +
           (short) tmpKey.getHashPartitionIdx(GlobalConfig.getSwitchPartitionCount(),
                   GlobalConfig.getServerTotalLogicalNum())%GlobalConfig.getserverPerServerLogicalNum()));
+    log("[NetcacheClient][RECV][UPDATE] key=" + key + " value=" + bytesToHex(tmpValue.getValData()));
 
     InswitchCacheClient.updateLoadStatistics(this.localLogicalClientIndex, dbResult);
 
@@ -194,11 +214,13 @@ public class NetcacheClient extends RemoteDB {
       tmpKey = InswitchCacheClient.getDynamicRulemap().trymap(tmpKey);
     }
 
+    log("[NetcacheClient][SEND][DELETE] key=" + key + " value=null");
     // send and recv
     DbUdpNativeResult dbResult = this.dbInterface.delNative(GlobalConfig.getCurmethodId(), tmpKey,
         GlobalConfig.getServerIp(),  (short)(GlobalConfig.getServerWorkerPortStart() +
           (short) tmpKey.getHashPartitionIdx(GlobalConfig.getSwitchPartitionCount(),
                   GlobalConfig.getServerTotalLogicalNum())%GlobalConfig.getserverPerServerLogicalNum()));
+    log("[NetcacheClient][RECV][DELETE] key=" + key + " value=null");
 
     InswitchCacheClient.updateLoadStatistics(this.localLogicalClientIndex, dbResult);
 
@@ -235,11 +257,13 @@ public class NetcacheClient extends RemoteDB {
       tmpKey = InswitchCacheClient.getDynamicRulemap().trymap(tmpKey);
     }
 
+    log("[NetcacheClient][SEND][INSERT] key=" + key + " value=" + bytesToHex(tmpValue.getValData()));
     // send and recv
     DbUdpNativeResult dbResult = this.dbInterface.putNative(GlobalConfig.getCurmethodId(), tmpKey, tmpValue,
         (short) this.globalClientLogicalIndex, GlobalConfig.getServerIp(),  (short)(GlobalConfig.getServerWorkerPortStart() +
           (short) tmpKey.getHashPartitionIdx(GlobalConfig.getSwitchPartitionCount(),
                   GlobalConfig.getServerTotalLogicalNum())%GlobalConfig.getserverPerServerLogicalNum()));
+    log("[NetcacheClient][RECV][INSERT] key=" + key + " value=" + bytesToHex(tmpValue.getValData()));
 
     InswitchCacheClient.updateLoadStatistics(this.localLogicalClientIndex, dbResult);
 

@@ -78,19 +78,17 @@ def process_pkt(pkt: bytes, in_if: str):
         return
     elif start_time_ns == -1:
         start_time_ns = time.time_ns()
-    # if in_if == 'veth-server0':
-    #     process_server0(pkt, in_if)
-    # elif in_if == 'veth-client0':
-    #     process_client0(pkt, in_if)
-    # elif in_if == 'veth-client1':
-    #     process_client1(pkt, in_if)
-    # elif in_if == 'veth-tofino8':
-    #     process_tofino8(pkt, in_if)
-    # else:
-    log_recv_pkt(pkt, in_if)
-    out_if = out_if_map[in_if]
-    sockets[out_if].send(pkt)
-    log('SEND', f'Forwarding packet from {in_if} to {out_if}')
+    if in_if == 'veth-server0':
+        process_server0(pkt, in_if)
+    elif in_if == 'veth-tofino8':
+        process_tofino8(pkt, in_if)
+    elif in_if == 'veth-client0':
+        process_client0(pkt, in_if)
+    else:
+        log_recv_pkt(pkt, in_if)
+        out_if = out_if_map[in_if]
+        sockets[out_if].send(pkt)
+        log('SEND', f'Forwarding packet from {in_if} to {out_if}')
 
 class OpCode(Enum):
     PUTREQ                 = 0x0001
@@ -128,15 +126,12 @@ def get_op_name(pkt: bytes) -> str:
     except ValueError:
         return f'UNKNOWN_OP_{op:04x}'
 
-# 0: Initial state.
-# 1: First SETVALID_INSWITCH server0 -> switch.
-# 2; PUTREQ client0 -> switch.
-# 3: Second SETVALID_INSWITCH server0 -> switch. 
-# 4: GETREQ client1 -> switch.
-# 5: GETREQ_NLATEST switch -> server0.
-# 6: PUTREQ_SEQ switch -> server0.
+# Events listened at given states.
+# 0: NETCACHE_PUTREQ_SEQ_CACHED tofino8 -> server0
+# 1: NETCACHE_VALUE_UPDATE      server0 -> tofino8
+# 2: NETCACHE_PUTREQ_SEQ_CACHED tofino8 -> server0
+# 3: GETREQ                     client0 -> tofino0
 state = 0
-setvalid_cnt = 0
 
 def is_state_n(n: int) -> Callable[[], bool]:
     global state
@@ -149,49 +144,17 @@ def inc_state():
     state += 1
     log('STATE', f'[{rel_time_str()}]server0_state: {state - 1} -> {state}')
 
-def process_client0(pkt: bytes, in_if: str):
-    global state
-
-    out_if = out_if_map[in_if]
-
-    if is_op(pkt, OpCode.PUTREQ):
-        log_recv_pkt(pkt, in_if)
-        delay_send(pkt, out_if, is_state_n(1), inc_state)
-        return
-    
-    log_recv_pkt(pkt, in_if)
-    sockets[out_if].send(pkt)
-    log('SEND', f'Forwarding packet from {in_if} to {out_if}')
-    return
-
-def process_client1(pkt: bytes, in_if: str):
-    global state
-
-    out_if = out_if_map[in_if]
-
-    if is_op(pkt, OpCode.GETREQ):
-        log_recv_pkt(pkt, in_if)
-        delay_send(pkt, out_if, is_state_n(3), inc_state)
-        return
-    
-    log_recv_pkt(pkt, in_if)
-    sockets[out_if].send(pkt)
-    log('SEND', f'Forwarding packet from {in_if} to {out_if}')
-    return
-
 def process_tofino8(pkt: bytes, in_if: str):
     global state
 
     out_if = out_if_map[in_if]
 
-    if is_op(pkt, OpCode.GETREQ_NLATEST):
+    if is_op(pkt, OpCode.NETCACHE_PUTREQ_SEQ_CACHED):
         log_recv_pkt(pkt, in_if)
-        delay_send(pkt, out_if, is_state_n(4), inc_state)
-        return
-    
-    if is_op(pkt, OpCode.PUTREQ_SEQ):
-        log_recv_pkt(pkt, in_if)
-        delay_send(pkt, out_if, is_state_n(5), inc_state)
+        state += 1
+        log('STATE', f'[{rel_time_str()}]state: {state - 1} -> {state}')
+        sockets[out_if].send(pkt)
+        log('SEND', f'Forwarding packet from {in_if} to {out_if}')
         return
     
     log_recv_pkt(pkt, in_if)
@@ -200,21 +163,34 @@ def process_tofino8(pkt: bytes, in_if: str):
     return
 
 def process_server0(pkt: bytes, in_if: str):
-    global state, setvalid_cnt
+    global state
 
     out_if = out_if_map[in_if]
 
-    if is_op(pkt, OpCode.SETVALID_INSWITCH):
-        if setvalid_cnt == 0: # First.
+    if is_op(pkt, OpCode.NETCACHE_VALUEUPDATE):
+        if state == 1:
             log_recv_pkt(pkt, in_if)
-            delay_send(pkt, out_if, is_state_n(0), inc_state)
-        elif setvalid_cnt == 1: # Second.
-            log_recv_pkt(pkt, in_if)
-            delay_send(pkt, out_if, is_state_n(2), inc_state)
+            state = 2
+            log('STATE', f'[{rel_time_str()}]state: 1 -> 2')
+            delay_send(pkt, out_if, is_state_n(3), inc_state)
+            return
         else:
-            # log('DROP', f'Dropping retransmitted SETVALID_INSWITCH packet from {in_if}')
-            pass
-        setvalid_cnt += 1
+            log('DROP', f'Dropping NETCACHE_VALUEUPDATE packet from {in_if} at state {state}')
+            return
+
+    log_recv_pkt(pkt, in_if)
+    sockets[out_if].send(pkt)
+    log('SEND', f'Forwarding packet from {in_if} to {out_if}')
+    return
+
+def process_client0(pkt: bytes, in_if: str):
+    global state
+
+    out_if = out_if_map[in_if]
+
+    if is_op(pkt, OpCode.GETREQ):
+        log_recv_pkt(pkt, in_if)
+        delay_send(pkt, out_if, is_state_n(4), inc_state)
         return
 
     log_recv_pkt(pkt, in_if)
