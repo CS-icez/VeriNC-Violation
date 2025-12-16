@@ -36,6 +36,18 @@ docker run -it --rm -v $LOCAL_PROJ_PATH:$SWITCH_PROJ_PATH $SDE_NAME bash -ic \
     "bf-p4c --verbose 3 -g -a tna -b tofino --program-name fisslock_decider \
         -o $SWITCH_PROJ_PATH/fisslock-p4-build $SWITCH_PROJ_PATH/switch/p4/switch.p4"
 
+# Compile switch control plane.
+docker run -it --rm -v $LOCAL_PROJ_PATH:$SWITCH_PROJ_PATH $SDE_NAME bash -ic " \
+    mkdir -p /tmp  && \
+    cd /root/onl-bf-bsp/bf-platforms && \
+    cp -rv $SWITCH_PROJ_PATH/switch/control/* fisslock && \
+    autoreconf && \
+    export PKG_CONFIG_PATH=\$SDE_INSTALL/lib/pkgconfig && \
+    ./configure --prefix=\$SDE_INSTALL --enable-grpc --enable-thrift --host=x86_64-linux-gnu && \
+    cd fisslock && \
+    make && make install && \
+    cp \$SDE_INSTALL/bin/fisslock_decider $SWITCH_PROJ_PATH/build \
+"
 
 # Compile server code.
 docker run -it --rm -v $LOCAL_PROJ_PATH:$MASTER_FISSLOCK_PATH dpdk:v21.11.4 bash -ic \
