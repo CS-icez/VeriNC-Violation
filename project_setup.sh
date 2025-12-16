@@ -38,9 +38,9 @@ docker run -it --rm -v $LOCAL_PROJ_PATH:$SWITCH_PROJ_PATH $SDE_NAME bash -ic \
 
 # Compile switch control plane.
 docker run -it --rm -v $LOCAL_PROJ_PATH:$SWITCH_PROJ_PATH $SDE_NAME bash -ic " \
-    mkdir -p /tmp  && \
     cd /root/onl-bf-bsp/bf-platforms && \
-    cp -rv $SWITCH_PROJ_PATH/switch/control/* fisslock && \
+    mkdir -p /tmp fisslock  && \
+    cp -r $SWITCH_PROJ_PATH/switch/control/* fisslock && \
     autoreconf && \
     export PKG_CONFIG_PATH=\$SDE_INSTALL/lib/pkgconfig && \
     ./configure --prefix=\$SDE_INSTALL --enable-grpc --enable-thrift --host=x86_64-linux-gnu && \

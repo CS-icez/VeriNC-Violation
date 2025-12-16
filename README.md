@@ -22,7 +22,7 @@ Replace `<sde_name>` with the name of the Docker image of Barefoot SDE (e.g., `s
 bash project_setup.sh <sde_name>
 ```
 
-This process takes around 30 seconds.
+This process takes around 40 seconds.
 
 ## Run Experiment
 
