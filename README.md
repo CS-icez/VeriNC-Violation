@@ -41,10 +41,8 @@ You must mount hugetlbfs on your host machine at `/dev/hugepages`. 128*2MB is en
 Replace `<branch>` with one of `SwitchML` `ATP` `NetCache` `FarReach` `NetLock` `FissLock`, and run the following command:
 
 ```bash
-git clone https://github.com/yourusername/verinc-violation.git -b <branch>
+git clone https://github.com/cs-icez/verinc-violation.git -b <branch>
 ```
-
-TODO: fill username.
 
 ## Next
 
