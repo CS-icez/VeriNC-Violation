@@ -6,7 +6,7 @@ This repository contains the code and instructions to **reproduce the violations
 
 > 📄 **Paper:** Tianyu Bai, Xiaoxi Zhang, Haoqing Wang, Ying Zhang, Wenfei Wu. *VeriNC: Finding Design Risks of In-Network Computing Systems.* IEEE ICNP 2026. [[arXiv]](https://arxiv.org/abs/2604.10186)
 >
-> <!-- TODO: Add BibTeX citation when available -->
+> 🏆 **ICNP 2026 Best Paper Award**
 
 ## Identified Violations
 
@@ -105,12 +105,24 @@ Each branch typically contains:
 ## Related Repositories
 
 - [VeriNC Compiler](https://github.com/CS-icez/VeriNC-Compiler) — Compiler that translates `.inc` protocol specifications into TLA+/PlusCal for model checking.
+- [VeriNC ICNP 2026 Talk Slides](https://github.com/CS-icez/verinc-icnp26-talk-slides) — Slides for the VeriNC talk at ICNP 2026, with LaTeX source.
 - [EPIC](https://github.com/In-Net/EPIC) — An INC protocol specification and reference system built on the principle of "Unified Abstraction, Polymorphic Realization" (SIGCOMM 2026), which uses VeriNC for formal correctness verification.
 
 ## Citation
 
-<!-- TODO: BibTeX entry will be added once the official citation is available. -->
+If you use VeriNC in your research, please cite:
 
-If you use this work in your research, please cite:
+```bibtex
+@inproceedings{bai2026verinc,
+  author    = {Bai, Tianyu and Zhang, Xiaoxi and Wang, Haoqing and Zhang, Ying and Wu, Wenfei},
+  title     = {{VeriNC}: Finding Design Risks of In-Network Computing Systems},
+  booktitle = {2026 IEEE 34th International Conference on Network Protocols (ICNP)},
+  year      = {2026}
+}
+```
 
-> Tianyu Bai, Xiaoxi Zhang, Haoqing Wang, Ying Zhang, Wenfei Wu. "VeriNC: Finding Design Risks of In-Network Computing Systems." IEEE ICNP, 2026.
+The proceedings are not yet on IEEE Xplore, so this entry has no pages or DOI. They will be added once the official record is available.
+
+## Contact
+
+Tianyu Bai — tianyubai@stu.pku.edu.cn
