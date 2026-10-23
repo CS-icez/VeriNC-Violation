@@ -1,6 +1,6 @@
 # VeriNC Real System Violation Reproduction
 
-**VeriNC** is the first general-purpose tool for verifying [in-network computing (INC)](https://en.wikipedia.org/wiki/In-network_computing) systems. By modeling INC protocols and performing model checking, VeriNC identifies design risks that can lead to property violations under network exceptions such as packet loss and out-of-order delivery.
+**VeriNC** is the first general-purpose tool for verifying **in-network computing (INC)** systems. By modeling INC protocols and performing model checking, VeriNC identifies design risks that can lead to property violations under network exceptions such as packet loss and out-of-order delivery.
 
 This repository contains the code and instructions to **reproduce the violations** identified by VeriNC in six real INC system implementations. Each system is deployed in Docker containers with a proxy-based fault injection mechanism, enabling controlled reproduction of violation traces reported by VeriNC.
 
